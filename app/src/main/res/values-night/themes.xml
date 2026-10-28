@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Evita el destello blanco al abrir la app con el celular en modo oscuro -->
+    <style name="Theme.MathEnglishQuest" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#1A1A1C</item>
+    </style>
+</resources>

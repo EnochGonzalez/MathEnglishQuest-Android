@@ -1,0 +1,8 @@
+Pon aquí los 4 archivos de Nunito (Google Fonts -> Nunito -> Download family -> carpeta static):
+
+  Nunito-SemiBold.ttf   -> renómbralo a nunito_semibold.ttf
+  Nunito-Bold.ttf       -> renómbralo a nunito_bold.ttf
+  Nunito-ExtraBold.ttf  -> renómbralo a nunito_extrabold.ttf
+  Nunito-Black.ttf      -> renómbralo a nunito_black.ttf
+
+Los nombres deben quedar en minúsculas y sin guiones. Borra este LEEME.txt después.
