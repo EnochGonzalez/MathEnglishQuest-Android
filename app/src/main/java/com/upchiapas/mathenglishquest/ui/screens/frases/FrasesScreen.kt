@@ -1,34 +1,27 @@
 package com.upchiapas.mathenglishquest.ui.screens.frases
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,23 +32,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.upchiapas.mathenglishquest.ui.theme.AppBackground
-import com.upchiapas.mathenglishquest.ui.theme.BlueAccent
-import com.upchiapas.mathenglishquest.ui.theme.BorderLight
-import com.upchiapas.mathenglishquest.ui.theme.CardBackground
-import com.upchiapas.mathenglishquest.ui.theme.PinkAccent
-import com.upchiapas.mathenglishquest.ui.theme.PinkLightBg
-import com.upchiapas.mathenglishquest.ui.theme.PurpleAccent
-import com.upchiapas.mathenglishquest.ui.theme.PurpleDark
-import com.upchiapas.mathenglishquest.ui.theme.PurpleLightBg
-import com.upchiapas.mathenglishquest.ui.theme.TextPrimary
-import com.upchiapas.mathenglishquest.ui.theme.TextSecondary
+import com.upchiapas.mathenglishquest.R
+import com.upchiapas.mathenglishquest.ui.components.ChunkyButton
+import com.upchiapas.mathenglishquest.ui.components.ScreenTitle
+import com.upchiapas.mathenglishquest.ui.theme.AppText
+import com.upchiapas.mathenglishquest.ui.theme.AppTheme
 import com.upchiapas.mathenglishquest.utils.getVoiceRecognizerIntent
 import com.upchiapas.mathenglishquest.utils.rememberTextToSpeechHelper
 import com.upchiapas.mathenglishquest.utils.rememberVoiceRecognizerLauncher
@@ -112,6 +101,8 @@ fun FrasesScreenContent(
     onOptionClick: (String) -> Unit,
     onVoiceButtonClick: () -> Unit
 ) {
+    val colors = AppTheme.colors
+
     if (uiState.showVoiceModal) {
         VoiceInstructionDialog(onDismiss = onDismissVoiceModal)
     }
@@ -127,201 +118,141 @@ fun FrasesScreenContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppBackground)
+            .background(colors.background)
             .statusBarsPadding()
-            .padding(16.dp)
+            .padding(20.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        // Header
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(PinkLightBg),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.ChatBubbleOutline,
-                    contentDescription = null,
-                    tint = PinkAccent,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = "Frases en Inglés",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-        }
+        ScreenTitle(iconRes = R.drawable.ic_chat, title = "Frases en Inglés")
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(15.dp))
 
-        // Mode Selector Tabs Row
+        // .mode-selector / .mode-btn
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             FrasesMode.entries.forEach { mode ->
                 val isSelected = mode == uiState.activeMode
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(64.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(if (isSelected) PurpleAccent else CardBackground)
-                        .border(
-                            width = 1.dp,
-                            color = if (isSelected) PurpleAccent else BorderLight,
-                            shape = RoundedCornerShape(14.dp)
-                        )
-                        .clickable { onModeSelect(mode) }
-                        .padding(horizontal = 4.dp),
-                    contentAlignment = Alignment.Center
+                ChunkyButton(
+                    onClick = { onModeSelect(mode) },
+                    modifier = Modifier.weight(1f),
+                    containerColor = if (isSelected) colors.purple else colors.surface,
+                    shadowColor = if (isSelected) colors.purpleDeep else Color.Transparent,
+                    contentColor = if (isSelected) Color.White else colors.mute,
+                    border = BorderStroke(2.dp, if (isSelected) colors.purple else colors.line),
+                    depth = 3.dp,
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 9.dp)
                 ) {
                     Text(
                         text = mode.title,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isSelected) Color.White else TextPrimary,
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
                         textAlign = TextAlign.Center,
-                        lineHeight = 16.sp
+                        lineHeight = 14.sp
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // Question Card
         val currentQ = uiState.currentQuestion
         if (currentQ != null) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = CardBackground),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            // .equation-card
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 100.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(colors.surface)
+                    .border(2.dp, colors.line, RoundedCornerShape(20.dp))
+                    .padding(14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 24.dp, horizontal = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    val questionDisplay = when (uiState.activeMode) {
-                        FrasesMode.SOLO_LETRAS -> {
-                            val op = if (currentQ.isAddition) "+" else "-"
-                            "${getWord(currentQ.num1)} $op ${getWord(currentQ.num2)}"
-                        }
-
-                        FrasesMode.NUMEROS_Y_LETRAS -> {
-                            val op = if (currentQ.isAddition) "+" else "-"
-                            "${currentQ.num1} $op ${currentQ.num2}"
-                        }
-
-                        FrasesMode.TODO_EN_INGLES -> {
-                            val op = if (currentQ.isAddition) "+" else "-"
-                            "${getWord(currentQ.num1)} $op ${getWord(currentQ.num2)}"
-                        }
-                    }
-
-                    Text(
-                        text = questionDisplay,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "Elige el resultado en inglés",
-                        fontSize = 14.sp,
-                        color = TextSecondary
-                    )
+                val op = if (currentQ.isAddition) "+" else "-"
+                val questionDisplay = when (uiState.activeMode) {
+                    FrasesMode.SOLO_LETRAS -> "${getWord(currentQ.num1)} $op ${getWord(currentQ.num2)}"
+                    FrasesMode.NUMEROS_Y_LETRAS -> "${currentQ.num1} $op ${currentQ.num2}"
+                    FrasesMode.TODO_EN_INGLES -> "${getWord(currentQ.num1)} $op ${getWord(currentQ.num2)}"
                 }
+
+                Text(
+                    text = questionDisplay,
+                    style = AppText.equation,
+                    color = colors.ink,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "Elige el resultado en inglés",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.mute
+                )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Content per Mode
             if (uiState.activeMode == FrasesMode.TODO_EN_INGLES) {
-                // Mode 3: Voice Only (No manual options)
+                // .voice-panel
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "Intento ${uiState.attemptCount} de 3",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextSecondary
+                        style = AppText.label,
+                        color = colors.mute
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                    Button(
+                    ChunkyButton(
                         onClick = onVoiceButtonClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = PurpleAccent)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Mic,
-                                contentDescription = "Micrófono",
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Toca y responde en voz alta",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
+                        Icon(
+                            painter = painterResource(R.drawable.ic_mic),
+                            contentDescription = "Micrófono",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(9.dp))
+                        Text(
+                            text = "Toca y responde en voz alta",
+                            style = AppText.button
+                        )
                     }
 
                     if (!uiState.voiceInlineMessage.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             text = uiState.voiceInlineMessage,
-                            fontSize = 14.sp,
+                            fontSize = 12.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary,
+                            color = colors.ink,
                             textAlign = TextAlign.Center
                         )
                     }
                 }
             } else {
-                // Modes 1 & 2: Option Buttons with Green / Red feedback
+                // .answers-grid
                 Column(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     currentQ.options.forEach { optionText ->
-                        val isSelected = optionText == uiState.selectedOption
-                        val isCorrect = optionText == uiState.correctOption
-
                         OptionButton(
                             text = optionText,
-                            isSelected = isSelected,
-                            isCorrect = isCorrect,
+                            isSelected = optionText == uiState.selectedOption,
+                            isCorrect = optionText == uiState.correctOption,
                             isAnswered = uiState.isAnswered,
                             onClick = { onOptionClick(optionText) }
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
             }
@@ -331,6 +262,7 @@ fun FrasesScreenContent(
     }
 }
 
+/** .answer-btn: normal, .correct (verde) o .wrong (rojo). */
 @Composable
 private fun OptionButton(
     text: String,
@@ -339,39 +271,61 @@ private fun OptionButton(
     isAnswered: Boolean,
     onClick: () -> Unit
 ) {
-    val greenColor = Color(0xFF22C55E)
-    val redColor = Color(0xFFEF4444)
+    val colors = AppTheme.colors
 
-    val containerColor = when {
-        isAnswered && isCorrect -> greenColor
-        isAnswered && isSelected -> redColor
-        else -> CardBackground
+    val showCorrect = isAnswered && isCorrect
+    val showWrong = isAnswered && isSelected && !isCorrect
+
+    val container = when {
+        showCorrect -> colors.green
+        showWrong -> colors.red
+        else -> colors.surface
     }
+    val deep = when {
+        showCorrect -> colors.greenDeep
+        showWrong -> colors.redDeep
+        else -> colors.lineStrong
+    }
+    val borderColor = when {
+        showCorrect -> colors.greenDeep
+        showWrong -> colors.redDeep
+        else -> colors.line
+    }
+    val textColor = if (showCorrect || showWrong) Color.White else colors.ink
 
-    val textColor = if (isAnswered && (isCorrect || isSelected)) Color.White else TextPrimary
+    ChunkyButton(
+        // enabled = true siempre: si estuviera desactivado el botón se vería al 40% y se perdería el verde/rojo
+        onClick = { if (!isAnswered) onClick() },
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = container,
+        shadowColor = deep,
+        contentColor = textColor,
+        border = BorderStroke(2.dp, borderColor),
+        depth = 4.dp,
+        shape = RoundedCornerShape(15.dp),
+        contentPadding = PaddingValues(13.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 19.sp,
+            fontWeight = FontWeight.ExtraBold
+        )
+    }
+}
 
-    Card(
+/** .modal-card */
+@Composable
+private fun ModalCard(content: @Composable ColumnScope.() -> Unit) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = !isAnswered) { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 18.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = text,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = textColor
-            )
-        }
-    }
+            .padding(horizontal = 20.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(AppTheme.colors.surface)
+            .padding(horizontal = 18.dp, vertical = 22.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        content = content
+    )
 }
 
 @Composable
@@ -380,102 +334,84 @@ private fun VoiceResultDialog(
     onSpeakClick: () -> Unit,
     onContinueClick: () -> Unit
 ) {
-    Dialog(onDismissRequest = onContinueClick) {
-        Card(
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+    val colors = AppTheme.colors
+
+    Dialog(
+        onDismissRequest = onContinueClick,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        ModalCard {
+            Icon(
+                painter = painterResource(R.drawable.ic_chat),
+                contentDescription = null,
+                tint = colors.purple,
+                modifier = Modifier.size(34.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "La respuesta era…",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = colors.ink,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = answerText,
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Black,
+                color = colors.ink,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // .voice-answer-listen
+            ChunkyButton(
+                onClick = onSpeakClick,
+                modifier = Modifier.fillMaxWidth(),
+                containerColor = colors.surface,
+                shadowColor = Color.Transparent,
+                contentColor = colors.purple,
+                border = BorderStroke(2.dp, colors.purple),
+                depth = 0.dp,
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(12.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(54.dp)
-                        .clip(CircleShape)
-                        .background(PurpleLightBg),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.ChatBubbleOutline,
-                        contentDescription = null,
-                        tint = PurpleAccent,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "La respuesta era...",
-                    fontSize = 15.sp,
-                    color = TextPrimary,
-                    textAlign = TextAlign.Center
+                Icon(
+                    painter = painterResource(R.drawable.ic_mic),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
                 )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = answerText,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
-                    textAlign = TextAlign.Center
+                    text = "Escuchar pronunciación",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1
                 )
+            }
 
-                Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-                OutlinedButton(
-                    onClick = onSpeakClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.5.dp, PurpleAccent)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Mic,
-                            contentDescription = "Escuchar pronunciación",
-                            tint = PurpleAccent,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Escuchar pronunciación",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = PurpleDark,
-                            maxLines = 1
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(
-                    onClick = onContinueClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = BlueAccent)
-                ) {
-                    Text(
-                        text = "Continuar",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
+            ChunkyButton(
+                onClick = onContinueClick,
+                modifier = Modifier.fillMaxWidth(),
+                containerColor = colors.blue,
+                shadowColor = colors.blueDeep,
+                depth = 4.dp,
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = "Continuar",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
             }
         }
     }
@@ -485,71 +421,57 @@ private fun VoiceResultDialog(
 private fun VoiceInstructionDialog(
     onDismiss: () -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+    val colors = AppTheme.colors
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        ModalCard {
+            Icon(
+                painter = painterResource(R.drawable.ic_mic),
+                contentDescription = null,
+                tint = colors.purple,
+                modifier = Modifier.size(34.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Antes de responder por voz",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = colors.ink,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "El reconocimiento de voz puede fallar si hay mucho ruido alrededor, hablas muy rápido o el micrófono no te escucha bien. Si eso pasa, no te preocupes: solo vuelve a intentarlo.",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.mute,
+                textAlign = TextAlign.Center,
+                lineHeight = 19.sp
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ChunkyButton(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+                containerColor = colors.blue,
+                shadowColor = colors.blueDeep,
+                depth = 4.dp,
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(54.dp)
-                        .clip(CircleShape)
-                        .background(PurpleLightBg),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Mic,
-                        contentDescription = null,
-                        tint = PurpleAccent,
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 Text(
-                    text = "Antes de responder por voz",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "El reconocimiento de voz puede fallar si hay mucho ruido alrededor, hablas muy rápido o el micrófono no te escucha bien. Si eso pasa, no te preocupes: solo vuelve a intentarlo.",
+                    text = "Entendido",
                     fontSize = 14.sp,
-                    color = TextSecondary,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 20.sp
+                    fontWeight = FontWeight.ExtraBold
                 )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = BlueAccent)
-                ) {
-                    Text(
-                        text = "Entendido",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
             }
         }
     }

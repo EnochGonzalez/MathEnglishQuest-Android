@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,52 +19,62 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.upchiapas.mathenglishquest.ui.theme.BlueBadgeText
-import com.upchiapas.mathenglishquest.ui.theme.BlueLightBg
-import com.upchiapas.mathenglishquest.ui.theme.BorderLight
-import com.upchiapas.mathenglishquest.ui.theme.TextPrimary
-import com.upchiapas.mathenglishquest.ui.theme.TextSecondary
+import com.upchiapas.mathenglishquest.R
+import com.upchiapas.mathenglishquest.data.model.UserRole
+import com.upchiapas.mathenglishquest.ui.theme.AppText
+import com.upchiapas.mathenglishquest.ui.theme.AppTheme
 
 @Composable
 fun UserTopHeader(
     userName: String = "Invitado",
+    role: UserRole = UserRole.INVITADO,
     onLogoutClick: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+    val colors = AppTheme.colors
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = "Hola, $userName",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextPrimary
+            style = AppText.topBarTitle,
+            color = colors.ink,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
         )
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(start = 8.dp)
         ) {
+            val badgeBg = if (role == UserRole.MAESTRO) colors.purpleSoft else colors.blueSoft
+            val badgeText = if (role == UserRole.MAESTRO) colors.purpleSoftText else colors.blueSoftText
+
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(BlueLightBg)
-                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(badgeBg)
+                    .padding(horizontal = 9.dp, vertical = 3.dp)
             ) {
                 Text(
-                    text = userName.uppercase(),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = BlueBadgeText
+                    text = role.label.uppercase(),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 0.3.sp,
+                    color = badgeText
                 )
             }
 
@@ -74,7 +82,7 @@ fun UserTopHeader(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(BorderLight.copy(alpha = 0.5f))
+                    .background(colors.line.copy(alpha = 0.6f))
                     .clickable {
                         if (onLogoutClick != null) {
                             onLogoutClick()
@@ -87,9 +95,9 @@ fun UserTopHeader(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                    painter = painterResource(R.drawable.ic_logout),
                     contentDescription = "Cerrar sesión",
-                    tint = TextSecondary,
+                    tint = colors.mute,
                     modifier = Modifier.size(18.dp)
                 )
             }

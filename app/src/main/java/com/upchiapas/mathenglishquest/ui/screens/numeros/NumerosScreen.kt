@@ -1,6 +1,5 @@
 package com.upchiapas.mathenglishquest.ui.screens.numeros
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,42 +13,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Abc
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.upchiapas.mathenglishquest.ui.theme.AppBackground
-import com.upchiapas.mathenglishquest.ui.theme.BorderLight
-import com.upchiapas.mathenglishquest.ui.theme.CardBackground
-import com.upchiapas.mathenglishquest.ui.theme.GreenAccent
-import com.upchiapas.mathenglishquest.ui.theme.GreenLightBg
-import com.upchiapas.mathenglishquest.ui.theme.NavyPrimary
-import com.upchiapas.mathenglishquest.ui.theme.TextPrimary
-import com.upchiapas.mathenglishquest.ui.theme.TextSecondary
+import com.upchiapas.mathenglishquest.R
+import com.upchiapas.mathenglishquest.ui.components.ChunkyCard
+import com.upchiapas.mathenglishquest.ui.components.ScreenTitle
+import com.upchiapas.mathenglishquest.ui.theme.AppText
+import com.upchiapas.mathenglishquest.ui.theme.AppTheme
 import com.upchiapas.mathenglishquest.utils.rememberTextToSpeechHelper
 
 @Composable
@@ -74,88 +59,66 @@ fun NumerosScreenContent(
     onCategorySelect: (NumberCategory) -> Unit,
     onNumberCardClick: (NumberItem) -> Unit
 ) {
+    val colors = AppTheme.colors
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppBackground)
+            .background(colors.background)
             .statusBarsPadding()
-            .padding(top = 16.dp, start = 16.dp, end = 16.dp)
+            .padding(top = 20.dp, start = 20.dp, end = 20.dp)
     ) {
-        // Header Row
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(GreenLightBg),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Abc,
-                    contentDescription = null,
-                    tint = GreenAccent,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = "Números en Inglés",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-        }
+        ScreenTitle(iconRes = R.drawable.ic_letters, title = "Números en Inglés")
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = "Toca una tarjeta para escuchar la pronunciación.",
-            fontSize = 13.sp,
-            color = TextSecondary
+            style = AppText.pageSub,
+            color = colors.mute
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // Category Tabs Row
+        // .tabs-row / .tab-chip
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             NumberCategory.entries.forEach { category ->
                 val isSelected = category == uiState.selectedCategory
+                val shape = RoundedCornerShape(20.dp)
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(if (isSelected) NavyPrimary else CardBackground)
+                        .clip(shape)
+                        .background(if (isSelected) colors.inverseBg else colors.surface)
                         .border(
-                            width = 1.dp,
-                            color = if (isSelected) NavyPrimary else BorderLight,
-                            shape = RoundedCornerShape(20.dp)
+                            width = 2.dp,
+                            color = if (isSelected) colors.inverseBg else colors.line,
+                            shape = shape
                         )
                         .clickable { onCategorySelect(category) }
-                        .padding(vertical = 10.dp),
+                        .padding(vertical = 7.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = category.title,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isSelected) Color.White else TextPrimary
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
+                        color = if (isSelected) colors.onInverse else colors.mute
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // Grid of Numbers
+        // .card-grid (3 columnas, gap 9px; 3dp de cada tarjeta ya son sombra)
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(9.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
             contentPadding = PaddingValues(bottom = 16.dp),
             modifier = Modifier.fillMaxSize()
         ) {
@@ -174,45 +137,28 @@ private fun NumberCard(
     item: NumberItem,
     onClick: () -> Unit
 ) {
-    var isPressed by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1.0f,
-        label = "cardScale"
-    )
+    val colors = AppTheme.colors
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(90.dp)
-            .scale(scale)
-            .clickable {
-                isPressed = true
-                onClick()
-                isPressed = false
-            },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ChunkyCard(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.Center
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = item.number.toString(),
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = colors.ink
             )
-            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = item.englishText,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = TextSecondary
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                color = colors.mute,
+                modifier = Modifier.padding(top = 2.dp)
             )
         }
     }

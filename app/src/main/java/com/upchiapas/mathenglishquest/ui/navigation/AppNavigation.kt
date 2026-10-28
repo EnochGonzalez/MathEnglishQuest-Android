@@ -16,7 +16,7 @@ import com.upchiapas.mathenglishquest.ui.screens.dado.DadoScreen
 import com.upchiapas.mathenglishquest.ui.screens.frases.FrasesScreen
 import com.upchiapas.mathenglishquest.ui.screens.home.HomeScreen
 import com.upchiapas.mathenglishquest.ui.screens.numeros.NumerosScreen
-import com.upchiapas.mathenglishquest.ui.theme.AppBackground
+import com.upchiapas.mathenglishquest.ui.theme.AppTheme
 
 @Composable
 fun AppNavigation() {
@@ -26,7 +26,7 @@ fun AppNavigation() {
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = AppBackground,
+        containerColor = AppTheme.colors.background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             BottomNavBar(
