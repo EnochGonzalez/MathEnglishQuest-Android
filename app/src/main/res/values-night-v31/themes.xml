@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.MathEnglishQuest" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#222225</item>
+        <item name="android:windowSplashScreenBackground">#222225</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_icon</item>
+    </style>
+</resources>

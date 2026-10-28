@@ -3,6 +3,6 @@
 
     <!-- Evita el destello blanco al abrir la app con el celular en modo oscuro -->
     <style name="Theme.MathEnglishQuest" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#1A1A1C</item>
+        <item name="android:windowBackground">#222225</item>
     </style>
 </resources>

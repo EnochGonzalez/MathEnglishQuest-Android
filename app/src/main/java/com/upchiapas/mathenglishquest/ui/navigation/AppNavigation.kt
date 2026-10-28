@@ -16,7 +16,16 @@ import com.upchiapas.mathenglishquest.ui.screens.dado.DadoScreen
 import com.upchiapas.mathenglishquest.ui.screens.frases.FrasesScreen
 import com.upchiapas.mathenglishquest.ui.screens.home.HomeScreen
 import com.upchiapas.mathenglishquest.ui.screens.numeros.NumerosScreen
+import com.upchiapas.mathenglishquest.ui.screens.splash.SplashScreen
 import com.upchiapas.mathenglishquest.ui.theme.AppTheme
+
+/** La barra inferior solo aparece en los módulos, nunca en la pantalla de carga ni en el login. */
+private val bottomBarRoutes = setOf(
+    Screen.Home.route,
+    Screen.Dado.route,
+    Screen.Numeros.route,
+    Screen.Frases.route
+)
 
 @Composable
 fun AppNavigation() {
@@ -29,27 +38,39 @@ fun AppNavigation() {
         containerColor = AppTheme.colors.background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            BottomNavBar(
-                currentRoute = currentRoute,
-                onNavigate = { targetRoute ->
-                    if (targetRoute != currentRoute) {
-                        navController.navigate(targetRoute) {
-                            popUpTo(Screen.Home.route) {
-                                saveState = (targetRoute != Screen.Home.route)
+            if (currentRoute in bottomBarRoutes) {
+                BottomNavBar(
+                    currentRoute = currentRoute,
+                    onNavigate = { targetRoute ->
+                        if (targetRoute != currentRoute) {
+                            navController.navigate(targetRoute) {
+                                popUpTo(Screen.Home.route) {
+                                    saveState = (targetRoute != Screen.Home.route)
+                                }
+                                launchSingleTop = true
+                                restoreState = (targetRoute != Screen.Home.route)
                             }
-                            launchSingleTop = true
-                            restoreState = (targetRoute != Screen.Home.route)
                         }
                     }
-                }
-            )
+                )
+            }
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = Screen.Splash.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(Screen.Splash.route) {
+                SplashScreen(
+                    onFinished = {
+                        // Por ahora va directo a Inicio; con el login aquí se decidirá según la sesión.
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable(Screen.Home.route) { HomeScreen(navController) }
             composable(Screen.Dado.route) { DadoScreen() }
             composable(Screen.Numeros.route) { NumerosScreen() }

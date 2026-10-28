@@ -2,6 +2,6 @@
 <resources>
 
     <style name="Theme.MathEnglishQuest" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">#F8FAFC</item>
+        <item name="android:windowBackground">#FFFFFF</item>
     </style>
 </resources>
