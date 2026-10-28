@@ -38,8 +38,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.upchiapas.mathenglishquest.R
 import com.upchiapas.mathenglishquest.ui.components.DiceLogo
 import com.upchiapas.mathenglishquest.ui.theme.AppTheme
+import com.upchiapas.mathenglishquest.utils.rememberSoundPlayer
 
 private val Purple = Color(0xFF8B5CF6)
 private val PurpleLight = Color(0xFFC084FC)
@@ -50,6 +52,12 @@ fun SplashScreen(
     viewModel: SplashViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val soundPlayer = rememberSoundPlayer()
+
+    // Sonido de inicio: dura 2.8s y acompaña a la barra de carga
+    LaunchedEffect(Unit) {
+        soundPlayer.play(R.raw.splash_jingle)
+    }
 
     LaunchedEffect(uiState.isFinished) {
         if (uiState.isFinished) onFinished()
