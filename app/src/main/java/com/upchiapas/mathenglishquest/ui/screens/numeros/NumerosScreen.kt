@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -27,6 +28,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.upchiapas.mathenglishquest.ui.theme.AppBackground
 import com.upchiapas.mathenglishquest.ui.theme.BorderLight
 import com.upchiapas.mathenglishquest.ui.theme.CardBackground
@@ -49,89 +52,33 @@ import com.upchiapas.mathenglishquest.ui.theme.TextPrimary
 import com.upchiapas.mathenglishquest.ui.theme.TextSecondary
 import com.upchiapas.mathenglishquest.utils.rememberTextToSpeechHelper
 
-data class NumberItem(
-    val number: Int,
-    val englishText: String
-)
+@Composable
+fun NumerosScreen(
+    viewModel: NumerosViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val ttsHelper = rememberTextToSpeechHelper()
 
-enum class NumberCategory(val title: String) {
-    BASICOS("Básicos"),
-    DECENAS("Decenas"),
-    CENTENAS("Centenas"),
-    MILES("Miles")
+    NumerosScreenContent(
+        uiState = uiState,
+        onCategorySelect = { viewModel.selectCategory(it) },
+        onNumberCardClick = { item ->
+            ttsHelper.speak(item.englishText)
+        }
+    )
 }
 
 @Composable
-fun NumerosScreen() {
-    val ttsHelper = rememberTextToSpeechHelper()
-    var selectedCategory by remember { mutableStateOf(NumberCategory.BASICOS) }
-
-    val numbersList = remember(selectedCategory) {
-        when (selectedCategory) {
-            NumberCategory.BASICOS -> listOf(
-                NumberItem(1, "One"),
-                NumberItem(2, "Two"),
-                NumberItem(3, "Three"),
-                NumberItem(4, "Four"),
-                NumberItem(5, "Five"),
-                NumberItem(6, "Six"),
-                NumberItem(7, "Seven"),
-                NumberItem(8, "Eight"),
-                NumberItem(9, "Nine"),
-                NumberItem(10, "Ten"),
-                NumberItem(11, "Eleven"),
-                NumberItem(12, "Twelve"),
-                NumberItem(13, "Thirteen"),
-                NumberItem(14, "Fourteen"),
-                NumberItem(15, "Fifteen"),
-                NumberItem(16, "Sixteen"),
-                NumberItem(17, "Seventeen"),
-                NumberItem(18, "Eighteen"),
-                NumberItem(19, "Nineteen")
-            )
-
-            NumberCategory.DECENAS -> listOf(
-                NumberItem(20, "Twenty"),
-                NumberItem(30, "Thirty"),
-                NumberItem(40, "Forty"),
-                NumberItem(50, "Fifty"),
-                NumberItem(60, "Sixty"),
-                NumberItem(70, "Seventy"),
-                NumberItem(80, "Eighty"),
-                NumberItem(90, "Ninety"),
-                NumberItem(100, "One Hundred")
-            )
-
-            NumberCategory.CENTENAS -> listOf(
-                NumberItem(100, "One Hundred"),
-                NumberItem(200, "Two Hundred"),
-                NumberItem(300, "Three Hundred"),
-                NumberItem(400, "Four Hundred"),
-                NumberItem(500, "Five Hundred"),
-                NumberItem(600, "Six Hundred"),
-                NumberItem(700, "Seven Hundred"),
-                NumberItem(800, "Eight Hundred"),
-                NumberItem(900, "Nine Hundred")
-            )
-
-            NumberCategory.MILES -> listOf(
-                NumberItem(1000, "One Thousand"),
-                NumberItem(2000, "Two Thousand"),
-                NumberItem(3000, "Three Thousand"),
-                NumberItem(4000, "Four Thousand"),
-                NumberItem(5000, "Five Thousand"),
-                NumberItem(6000, "Six Thousand"),
-                NumberItem(7000, "Seven Thousand"),
-                NumberItem(8000, "Eight Thousand"),
-                NumberItem(9000, "Nine Thousand")
-            )
-        }
-    }
-
+fun NumerosScreenContent(
+    uiState: NumerosUiState,
+    onCategorySelect: (NumberCategory) -> Unit,
+    onNumberCardClick: (NumberItem) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(AppBackground)
+            .statusBarsPadding()
             .padding(top = 16.dp, start = 16.dp, end = 16.dp)
     ) {
         // Header Row
@@ -177,7 +124,7 @@ fun NumerosScreen() {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             NumberCategory.entries.forEach { category ->
-                val isSelected = category == selectedCategory
+                val isSelected = category == uiState.selectedCategory
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -188,7 +135,7 @@ fun NumerosScreen() {
                             color = if (isSelected) NavyPrimary else BorderLight,
                             shape = RoundedCornerShape(20.dp)
                         )
-                        .clickable { selectedCategory = category }
+                        .clickable { onCategorySelect(category) }
                         .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -212,12 +159,10 @@ fun NumerosScreen() {
             contentPadding = PaddingValues(bottom = 16.dp),
             modifier = Modifier.fillMaxSize()
         ) {
-            items(numbersList, key = { "${it.number}_${it.englishText}" }) { item ->
+            items(uiState.numbersList, key = { "${it.number}_${it.englishText}" }) { item ->
                 NumberCard(
                     item = item,
-                    onClick = {
-                        ttsHelper.speak(item.englishText)
-                    }
+                    onClick = { onNumberCardClick(item) }
                 )
             }
         }

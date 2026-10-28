@@ -1,11 +1,12 @@
 package com.upchiapas.mathenglishquest.ui.navigation
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -24,17 +25,21 @@ fun AppNavigation() {
     val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         containerColor = AppBackground,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             BottomNavBar(
                 currentRoute = currentRoute,
                 onNavigate = { targetRoute ->
-                    navController.navigate(targetRoute) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                    if (targetRoute != currentRoute) {
+                        navController.navigate(targetRoute) {
+                            popUpTo(Screen.Home.route) {
+                                saveState = (targetRoute != Screen.Home.route)
+                            }
+                            launchSingleTop = true
+                            restoreState = (targetRoute != Screen.Home.route)
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
                 }
             )

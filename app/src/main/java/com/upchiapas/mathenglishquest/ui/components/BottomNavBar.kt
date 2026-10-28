@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -22,14 +23,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.upchiapas.mathenglishquest.ui.navigation.Screen
 import com.upchiapas.mathenglishquest.ui.theme.BlueAccent
-import com.upchiapas.mathenglishquest.ui.theme.BorderLight
 import com.upchiapas.mathenglishquest.ui.theme.CardBackground
 import com.upchiapas.mathenglishquest.ui.theme.TextSecondary
 
@@ -58,7 +57,9 @@ fun BottomNavBar(
     )
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding(),
         color = CardBackground,
         shadowElevation = 8.dp,
         tonalElevation = 2.dp

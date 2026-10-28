@@ -24,6 +24,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,11 +34,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.upchiapas.mathenglishquest.ui.components.UserTopHeader
 import com.upchiapas.mathenglishquest.ui.navigation.Screen
 import com.upchiapas.mathenglishquest.ui.theme.AppBackground
-import com.upchiapas.mathenglishquest.ui.theme.BorderLight
 import com.upchiapas.mathenglishquest.ui.theme.CardBackground
 import com.upchiapas.mathenglishquest.ui.theme.GreenAccent
 import com.upchiapas.mathenglishquest.ui.theme.GreenLightBg
@@ -49,13 +51,33 @@ import com.upchiapas.mathenglishquest.ui.theme.TextPrimary
 import com.upchiapas.mathenglishquest.ui.theme.TextSecondary
 
 @Composable
-fun HomeScreen(navController: NavHostController) {
+fun HomeScreen(
+    navController: NavHostController,
+    viewModel: HomeViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    HomeScreenContent(
+        uiState = uiState,
+        onNavigateToDado = { navController.navigate(Screen.Dado.route) },
+        onNavigateToNumeros = { navController.navigate(Screen.Numeros.route) },
+        onNavigateToFrases = { navController.navigate(Screen.Frases.route) }
+    )
+}
+
+@Composable
+fun HomeScreenContent(
+    uiState: HomeUiState,
+    onNavigateToDado: () -> Unit,
+    onNavigateToNumeros: () -> Unit,
+    onNavigateToFrases: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(AppBackground)
     ) {
-        UserTopHeader()
+        UserTopHeader(userName = uiState.userName)
 
         Column(
             modifier = Modifier
@@ -67,8 +89,7 @@ fun HomeScreen(navController: NavHostController) {
 
             // Hero Card - Tu Misión de Hoy
             Card(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = NavyPrimary),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -85,14 +106,14 @@ fun HomeScreen(navController: NavHostController) {
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Elige un módulo",
+                        text = uiState.missionTitle,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Practica matemáticas y vocabulario en inglés. Cada racha de 3 desbloquea más dificultad.",
+                        text = uiState.missionSubtitle,
                         fontSize = 14.sp,
                         color = Color(0xFFE2E8F0),
                         lineHeight = 20.sp
@@ -109,7 +130,7 @@ fun HomeScreen(navController: NavHostController) {
                 icon = Icons.Default.Casino,
                 iconBgColor = PurpleLightBg,
                 iconColor = PurpleDark,
-                onClick = { navController.navigate(Screen.Dado.route) }
+                onClick = onNavigateToDado
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -121,7 +142,7 @@ fun HomeScreen(navController: NavHostController) {
                 icon = Icons.Default.Abc,
                 iconBgColor = GreenLightBg,
                 iconColor = GreenAccent,
-                onClick = { navController.navigate(Screen.Numeros.route) }
+                onClick = onNavigateToNumeros
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -133,7 +154,7 @@ fun HomeScreen(navController: NavHostController) {
                 icon = Icons.Outlined.ChatBubbleOutline,
                 iconBgColor = PinkLightBg,
                 iconColor = PinkAccent,
-                onClick = { navController.navigate(Screen.Frases.route) }
+                onClick = onNavigateToFrases
             )
 
             Spacer(modifier = Modifier.height(24.dp))

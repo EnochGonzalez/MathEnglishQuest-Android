@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,11 +30,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.upchiapas.mathenglishquest.ui.theme.AppBackground
 import com.upchiapas.mathenglishquest.ui.theme.BorderLight
 import com.upchiapas.mathenglishquest.ui.theme.CardBackground
@@ -50,25 +49,32 @@ import com.upchiapas.mathenglishquest.ui.theme.PurpleAccent
 import com.upchiapas.mathenglishquest.ui.theme.PurpleDark
 import com.upchiapas.mathenglishquest.ui.theme.PurpleLightBg
 import com.upchiapas.mathenglishquest.ui.theme.TextPrimary
-import kotlin.random.Random
 
-enum class DadoDifficulty(val title: String) {
-    FACIL("Fácil"),
-    MEDIO("Medio"),
-    DIFICIEL("Difícil")
+@Composable
+fun DadoScreen(
+    viewModel: DadoViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    DadoScreenContent(
+        uiState = uiState,
+        onDifficultySelect = { viewModel.selectDifficulty(it) },
+        onRollClick = {
+            viewModel.rollDice()
+            Toast.makeText(context, "¡Dado lanzado!", Toast.LENGTH_SHORT).show()
+        }
+    )
 }
 
 @Composable
-fun DadoScreen() {
-    val context = LocalContext.current
-    var selectedDifficulty by remember { mutableStateOf(DadoDifficulty.FACIL) }
-    var dice1 by remember { mutableIntStateOf(1) }
-    var dice2 by remember { mutableIntStateOf(1) }
-    var rotationAngle by remember { mutableStateOf(0f) }
-    var streakCount by remember { mutableIntStateOf(0) }
-
+fun DadoScreenContent(
+    uiState: DadoUiState,
+    onDifficultySelect: (DadoDifficulty) -> Unit,
+    onRollClick: () -> Unit
+) {
     val rotation by animateFloatAsState(
-        targetValue = rotationAngle,
+        targetValue = uiState.rotationAngle,
         animationSpec = tween(durationMillis = 400),
         label = "diceRoll"
     )
@@ -77,6 +83,7 @@ fun DadoScreen() {
         modifier = Modifier
             .fillMaxSize()
             .background(AppBackground)
+            .statusBarsPadding()
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
@@ -116,7 +123,7 @@ fun DadoScreen() {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             DadoDifficulty.entries.forEach { diff ->
-                val isSelected = diff == selectedDifficulty
+                val isSelected = diff == uiState.selectedDifficulty
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -127,7 +134,7 @@ fun DadoScreen() {
                             color = if (isSelected) PurpleDark else BorderLight,
                             shape = RoundedCornerShape(16.dp)
                         )
-                        .clickable { selectedDifficulty = diff }
+                        .clickable { onDifficultySelect(diff) }
                         .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -157,7 +164,7 @@ fun DadoScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Racha actual: 🔥 $streakCount",
+                    text = "Racha actual: 🔥 ${uiState.streakCount}",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = PurpleAccent
@@ -170,19 +177,17 @@ fun DadoScreen() {
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    DiceVisual(value = dice1, rotation = rotation)
-                    if (selectedDifficulty != DadoDifficulty.FACIL) {
+                    DiceVisual(value = uiState.dice1, rotation = rotation)
+                    if (uiState.selectedDifficulty != DadoDifficulty.FACIL) {
                         Text("+", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                        DiceVisual(value = dice2, rotation = rotation)
+                        DiceVisual(value = uiState.dice2, rotation = rotation)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                val result = if (selectedDifficulty == DadoDifficulty.FACIL) dice1 else dice1 + dice2
-
                 Text(
-                    text = "Resultado: $result",
+                    text = "Resultado: ${uiState.result}",
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
@@ -191,13 +196,7 @@ fun DadoScreen() {
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Button(
-                    onClick = {
-                        rotationAngle += 360f
-                        dice1 = Random.nextInt(1, 7)
-                        dice2 = Random.nextInt(1, 7)
-                        streakCount++
-                        Toast.makeText(context, "¡Dado lanzado!", Toast.LENGTH_SHORT).show()
-                    },
+                    onClick = onRollClick,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
