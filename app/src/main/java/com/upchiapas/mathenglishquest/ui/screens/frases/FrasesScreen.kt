@@ -6,10 +6,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -129,14 +131,18 @@ fun FrasesScreenContent(
 
         // .mode-selector / .mode-btn
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             FrasesMode.entries.forEach { mode ->
                 val isSelected = mode == uiState.activeMode
                 ChunkyButton(
                     onClick = { onModeSelect(mode) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                     containerColor = if (isSelected) colors.purple else colors.surface,
                     shadowColor = if (isSelected) colors.purpleDeep else Color.Transparent,
                     contentColor = if (isSelected) Color.White else colors.mute,

@@ -12,7 +12,12 @@ object DatabaseProvider {
                 context.applicationContext,
                 AppDatabase::class.java,
                 "math_english_quest.db"
-            ).build()
+            )
+                // De la 2 a la 3 y de la 3 a la 4 se conservan los datos. Solo si alguien viene de la versión 1 (que ya no
+                // existe en ningún celular real) se recrea. Cada cambio futuro necesita su propia migración.
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+                .fallbackToDestructiveMigration(dropAllTables = true)
+                .build()
             INSTANCE = instance
             instance
         }

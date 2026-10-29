@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.upchiapas.mathenglishquest.R
+import com.upchiapas.mathenglishquest.data.model.UserRole
+import com.upchiapas.mathenglishquest.ui.rememberAppViewModelFactory
 import com.upchiapas.mathenglishquest.ui.components.ChunkyCard
 import com.upchiapas.mathenglishquest.ui.components.UserTopHeader
 import com.upchiapas.mathenglishquest.ui.navigation.Screen
@@ -38,7 +40,7 @@ import com.upchiapas.mathenglishquest.ui.theme.AppTheme
 @Composable
 fun HomeScreen(
     navController: NavHostController,
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel = viewModel(factory = rememberAppViewModelFactory())
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -46,7 +48,15 @@ fun HomeScreen(
         uiState = uiState,
         onNavigateToDado = { navController.navigate(Screen.Dado.route) },
         onNavigateToNumeros = { navController.navigate(Screen.Numeros.route) },
-        onNavigateToFrases = { navController.navigate(Screen.Frases.route) }
+        onNavigateToFrases = { navController.navigate(Screen.Frases.route) },
+        onNavigateToPortfolio = { navController.navigate(Screen.Portfolio.route) },
+        onNavigateToClase = { navController.navigate(Screen.Clase.route) },
+        onLogout = {
+            viewModel.logout()
+            navController.navigate(Screen.Login.route) {
+                popUpTo(Screen.Home.route) { inclusive = true }
+            }
+        }
     )
 }
 
@@ -55,7 +65,10 @@ fun HomeScreenContent(
     uiState: HomeUiState,
     onNavigateToDado: () -> Unit,
     onNavigateToNumeros: () -> Unit,
-    onNavigateToFrases: () -> Unit
+    onNavigateToFrases: () -> Unit,
+    onNavigateToPortfolio: () -> Unit,
+    onNavigateToClase: () -> Unit,
+    onLogout: () -> Unit
 ) {
     val colors = AppTheme.colors
 
@@ -64,7 +77,7 @@ fun HomeScreenContent(
             .fillMaxSize()
             .background(colors.background)
     ) {
-        UserTopHeader(userName = uiState.userName, role = uiState.role)
+        UserTopHeader(userName = uiState.userName, role = uiState.role, onLogoutClick = onLogout)
 
         Column(
             modifier = Modifier
@@ -137,6 +150,34 @@ fun HomeScreenContent(
                 iconColor = colors.redSoftText,
                 onClick = onNavigateToFrases
             )
+
+            // Solo estudiantes con cuenta: los invitados no suben evidencias y los maestros tendrán "Mi Clase"
+            if (uiState.role == UserRole.ESTUDIANTE) {
+                Spacer(modifier = Modifier.height(7.dp))
+
+                ModuleCard(
+                    title = "Mi Portafolio",
+                    description = "Tus evidencias de trabajo en papel",
+                    iconRes = R.drawable.ic_folder,
+                    iconBgColor = colors.yellowSoft,
+                    iconColor = colors.yellowSoftText,
+                    onClick = onNavigateToPortfolio
+                )
+            }
+
+            // Solo maestros: el panel para ver a sus estudiantes y sus evidencias
+            if (uiState.role == UserRole.MAESTRO) {
+                Spacer(modifier = Modifier.height(7.dp))
+
+                ModuleCard(
+                    title = "Mi Clase",
+                    description = "Mira a tus estudiantes y su progreso",
+                    iconRes = R.drawable.ic_cap,
+                    iconBgColor = colors.blueSoft,
+                    iconColor = colors.blueSoftText,
+                    onClick = onNavigateToClase
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
         }
