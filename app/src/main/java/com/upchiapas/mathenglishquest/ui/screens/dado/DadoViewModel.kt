@@ -16,6 +16,7 @@ import com.upchiapas.mathenglishquest.domain.dado.EvidenceSaver
 import com.upchiapas.mathenglishquest.domain.dado.ExpressionFormatter
 import com.upchiapas.mathenglishquest.domain.dado.HierarchyEvaluator
 import com.upchiapas.mathenglishquest.domain.dado.NumberFormatter
+import com.upchiapas.mathenglishquest.domain.howto.HowToBuilder
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -146,7 +147,9 @@ class DadoViewModel(
     }
 
     fun onHowToClick() {
-        if (_uiState.value.canOpenHowTo) _uiState.update { it.copy(dialog = DadoDialog.HowTo) }
+        if (_uiState.value.canOpenHowTo) {
+            _uiState.update { it.copy(dialog = DadoDialog.HowTo(HowToBuilder.solutions(it.steps))) }
+        }
     }
 
     fun onDialogDismissed() {

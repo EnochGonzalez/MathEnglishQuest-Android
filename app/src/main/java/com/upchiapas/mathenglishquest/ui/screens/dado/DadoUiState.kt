@@ -5,6 +5,7 @@ import com.upchiapas.mathenglishquest.data.model.Difficulty
 import com.upchiapas.mathenglishquest.data.model.ExerciseStep
 import com.upchiapas.mathenglishquest.data.model.GameMode
 import com.upchiapas.mathenglishquest.domain.dado.DadoGameState
+import com.upchiapas.mathenglishquest.domain.howto.HowToSolution
 
 /** Texto pequeño debajo de la ecuación. La pantalla decide las palabras exactas. */
 sealed interface DadoNote {
@@ -18,7 +19,8 @@ sealed interface DadoNote {
 sealed interface DadoDialog {
     data class RushWarning(val level: Difficulty, val effective: Difficulty) : DadoDialog
     data class GameOver(val hadProgressedBeyondEasy: Boolean) : DadoDialog
-    data object HowTo : DadoDialog
+    /** El procedimiento de cada paso del ejercicio que se acaba de responder. */
+    data class HowTo(val solutions: List<HowToSolution>) : DadoDialog
 }
 
 data class DadoUiState(

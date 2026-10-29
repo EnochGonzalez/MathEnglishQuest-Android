@@ -15,6 +15,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -60,7 +61,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.upchiapas.mathenglishquest.R
 import com.upchiapas.mathenglishquest.data.model.Difficulty
 import com.upchiapas.mathenglishquest.data.model.GameMode
-import com.upchiapas.mathenglishquest.domain.dado.NumberFormatter
 import com.upchiapas.mathenglishquest.ui.components.AnswerButton
 import com.upchiapas.mathenglishquest.ui.components.ChunkyButton
 import com.upchiapas.mathenglishquest.ui.components.EquationCard
@@ -139,7 +139,6 @@ fun DadoScreenContent(
 
     DadoDialogs(
         dialog = state.dialog,
-        state = state,
         onDismiss = onDialogDismissed,
         onGameOverDismissed = onGameOverDismissed
     )
@@ -263,8 +262,11 @@ fun DadoScreenContent(
         Spacer(modifier = Modifier.height(9.dp))
 
         // ---- Dificultad ----
+        // IntrinsicSize.Min + fillMaxHeight: los 4 botones miden lo mismo que el más alto, aunque "Fácil" tenga una sola línea
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
             horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Difficulty.entries.forEach { difficulty ->
@@ -272,7 +274,9 @@ fun DadoScreenContent(
                 val active = difficulty == state.game.difficulty
                 ChunkyButton(
                     onClick = { if (unlocked) onDifficultySelected(difficulty) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                     containerColor = when {
                         active -> colors.blue
                         unlocked -> colors.blueSoft
@@ -588,7 +592,6 @@ private fun SoftActionButton(
 @Composable
 private fun DadoDialogs(
     dialog: DadoDialog?,
-    state: DadoUiState,
     onDismiss: () -> Unit,
     onGameOverDismissed: () -> Unit
 ) {
@@ -621,60 +624,7 @@ private fun DadoDialogs(
             ModalPrimaryButton(text = "Reintentar", onClick = onGameOverDismissed)
         }
 
-        DadoDialog.HowTo -> ModalDialog(onDismissRequest = onDismiss) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ScreenTitle(iconRes = R.drawable.ic_bulb, title = "Cómo se resuelve")
-                Icon(
-                    painter = painterResource(R.drawable.ic_close),
-                    contentDescription = "Cerrar",
-                    tint = colors.mute,
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable(onClick = onDismiss)
-                        .padding(8.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            if (state.steps.size > 1) {
-                Text(
-                    text = "Primero las multiplicaciones y divisiones, y después las sumas y restas, de izquierda a derecha.",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colors.mute,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-            }
-
-            state.steps.forEachIndexed { index, step ->
-                Column(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                    if (state.steps.size > 1) {
-                        Text(
-                            text = "Paso ${index + 1}",
-                            style = AppText.label,
-                            color = colors.mute
-                        )
-                    }
-                    Text(
-                        text = "${NumberFormatter.format(step.a)} ${step.operation.symbol} " +
-                            "${NumberFormatter.format(step.b)} = ${NumberFormatter.format(step.result)}",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = colors.blueText
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-            ModalPrimaryButton(text = "Cerrar", onClick = onDismiss)
-        }
+        is DadoDialog.HowTo -> HowToDialog(solutions = dialog.solutions, onDismiss = onDismiss)
     }
 }
 
@@ -715,7 +665,7 @@ private fun ModalText(text: String) {
 }
 
 @Composable
-private fun ModalPrimaryButton(text: String, onClick: () -> Unit) {
+internal fun ModalPrimaryButton(text: String, onClick: () -> Unit) {
     val colors = AppTheme.colors
     ChunkyButton(
         onClick = onClick,
