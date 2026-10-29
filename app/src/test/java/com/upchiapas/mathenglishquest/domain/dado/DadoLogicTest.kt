@@ -219,4 +219,27 @@ class DadoLogicTest {
         assertEquals("0", NumberFormatter.format(0.0))
         assertEquals("3.33", NumberFormatter.format(10.0 / 3.0))
     }
+
+    // ---------- Foto de evidencia ----------
+
+    @Test
+    fun evidencia_directoDesdeMedio() {
+        assertFalse(DadoRules.needsEvidence(GameMode.DIRECTO, Difficulty.FACIL))
+        assertTrue(DadoRules.needsEvidence(GameMode.DIRECTO, Difficulty.MEDIO))
+        assertTrue(DadoRules.needsEvidence(GameMode.DIRECTO, Difficulty.DIFICIL))
+        assertTrue(DadoRules.needsEvidence(GameMode.DIRECTO, Difficulty.MUY_DIFICIL))
+    }
+
+    @Test
+    fun evidencia_normalDesdeDificil() {
+        assertFalse(DadoRules.needsEvidence(GameMode.NORMAL, Difficulty.FACIL))
+        assertFalse(DadoRules.needsEvidence(GameMode.NORMAL, Difficulty.MEDIO))
+        assertTrue(DadoRules.needsEvidence(GameMode.NORMAL, Difficulty.DIFICIL))
+        assertTrue(DadoRules.needsEvidence(GameMode.NORMAL, Difficulty.MUY_DIFICIL))
+    }
+
+    @Test
+    fun evidencia_rushNunca() {
+        Difficulty.entries.forEach { assertFalse(DadoRules.needsEvidence(GameMode.RUSH, it)) }
+    }
 }

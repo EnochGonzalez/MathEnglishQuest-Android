@@ -20,6 +20,17 @@ object DadoRules {
     fun needsRushWarning(mode: GameMode, difficulty: Difficulty): Boolean =
         mode == GameMode.RUSH && difficulty.ordinal >= 2
 
+    /**
+     * ¿Este ejercicio exige foto del procedimiento? (exerciseNeedsEvidence del prototipo)
+     * Directo la pide desde Medio; Normal desde Difícil; Rush nunca. La dificultad que cuenta es la elegida,
+     * no la efectiva. Que el usuario sea un estudiante con cuenta se revisa aparte.
+     */
+    fun needsEvidence(mode: GameMode, difficulty: Difficulty): Boolean {
+        if (mode == GameMode.RUSH) return false
+        val threshold = if (mode == GameMode.DIRECTO) Difficulty.MEDIO.ordinal else Difficulty.DIFICIL.ordinal
+        return difficulty.ordinal >= threshold
+    }
+
     /** Nivel máximo que se alcanza con esa racha: 3 → Medio, 6 → Difícil, 9 → Muy Difícil. */
     fun unlockedLevelForStreak(streak: Int): Int =
         Difficulty.entries.lastOrNull { streak >= it.unlockStreak }?.ordinal ?: 0

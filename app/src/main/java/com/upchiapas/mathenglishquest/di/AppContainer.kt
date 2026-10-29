@@ -5,6 +5,7 @@ import com.upchiapas.mathenglishquest.data.local.DatabaseProvider
 import com.upchiapas.mathenglishquest.data.local.SessionManager
 import com.upchiapas.mathenglishquest.data.repository.AuthRepository
 import com.upchiapas.mathenglishquest.data.repository.DadoProgressRepository
+import com.upchiapas.mathenglishquest.data.repository.EvidenceRepository
 
 /**
  * Crea y comparte los objetos de la app (base de datos, sesión, repositorios).
@@ -16,6 +17,7 @@ class AppContainer(context: Context) {
 
     val authRepository = AuthRepository(database.usuarioDao(), sessionManager)
     val dadoProgressRepository = DadoProgressRepository(context)
+    val evidenceRepository = EvidenceRepository(context, database.evidenciaDao(), sessionManager)
 
     companion object {
         @Volatile private var INSTANCE: AppContainer? = null

@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.upchiapas.mathenglishquest.data.model.UserRole
 import com.upchiapas.mathenglishquest.data.repository.DadoProgressRepository
 import com.upchiapas.mathenglishquest.di.AppContainer
 import com.upchiapas.mathenglishquest.ui.screens.auth.LoginViewModel
@@ -12,6 +13,7 @@ import com.upchiapas.mathenglishquest.ui.screens.auth.RegisterStudentViewModel
 import com.upchiapas.mathenglishquest.ui.screens.auth.RegisterTeacherViewModel
 import com.upchiapas.mathenglishquest.ui.screens.dado.DadoViewModel
 import com.upchiapas.mathenglishquest.ui.screens.home.HomeViewModel
+import com.upchiapas.mathenglishquest.ui.screens.portfolio.PortfolioViewModel
 import com.upchiapas.mathenglishquest.ui.screens.splash.SplashViewModel
 
 /** Crea los ViewModels que necesitan repositorios (los que no, se crean con viewModel() normal). */
@@ -29,8 +31,16 @@ class AppViewModelFactory(private val container: AppContainer) : ViewModelProvid
             modelClass.isAssignableFrom(DadoViewModel::class.java) -> DadoViewModel(
                 // El progreso se guarda por correo; quien entró "sin correo" comparte la clave de invitado
                 userKeyProvider = { auth.currentUser()?.email ?: DadoProgressRepository.GUEST_KEY },
-                progressStore = container.dadoProgressRepository
+                progressStore = container.dadoProgressRepository,
+                // La foto del procedimiento solo se exige a estudiantes con cuenta (no a invitados ni maestros)
+                evidenceEligibleProvider = {
+                    val user = auth.currentUser()
+                    user != null && user.role == UserRole.ESTUDIANTE && user.email != null
+                },
+                evidenceSaver = container.evidenceRepository
             )
+            modelClass.isAssignableFrom(PortfolioViewModel::class.java) -> PortfolioViewModel(container.evidenceRepository)
+            modelClass.isAssignableFrom(MainViewModel::class.java) -> MainViewModel(auth)
             else -> throw IllegalArgumentException("ViewModel desconocido: ${modelClass.name}")
         } as T
     }

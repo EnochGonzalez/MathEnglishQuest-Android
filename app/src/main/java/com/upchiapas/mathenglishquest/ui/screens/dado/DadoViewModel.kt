@@ -12,6 +12,7 @@ import com.upchiapas.mathenglishquest.domain.dado.DadoGameState
 import com.upchiapas.mathenglishquest.domain.dado.DadoProgressStore
 import com.upchiapas.mathenglishquest.domain.dado.DadoRules
 import com.upchiapas.mathenglishquest.domain.dado.ExerciseGenerator
+import com.upchiapas.mathenglishquest.domain.dado.EvidenceSaver
 import com.upchiapas.mathenglishquest.domain.dado.ExpressionFormatter
 import com.upchiapas.mathenglishquest.domain.dado.HierarchyEvaluator
 import com.upchiapas.mathenglishquest.domain.dado.NumberFormatter
@@ -32,6 +33,9 @@ class DadoViewModel(
     private val progressStore: DadoProgressStore,
     private val exerciseGenerator: ExerciseGenerator = ExerciseGenerator(),
     private val optionsGenerator: AnswerOptionsGenerator = AnswerOptionsGenerator(),
+    /** true solo para estudiantes con cuenta (no invitados ni maestros). */
+    private val evidenceEligibleProvider: suspend () -> Boolean = { false },
+    private val evidenceSaver: EvidenceSaver? = null,
     private val nextDelayMs: Long = NEXT_DELAY_MS,
     private val chainDoneDelayMs: Long = CHAIN_DONE_DELAY_MS,
     private val rushTotalMs: Long = DadoRules.RUSH_SECONDS * 1000L
@@ -49,6 +53,10 @@ class DadoViewModel(
     )
 
     private var userKey: String? = null
+    private var evidenceEligible = false
+    private var currentCategories: List<String> = emptyList()
+    /** Sube cada vez que el ejercicio se reinicia: así una foto que termina tarde no desbloquea otro ejercicio. */
+    private var exerciseToken = 0
     private var correctValue: Double = 0.0
     private var answerHandler: ((Boolean) -> Unit)? = null
     private var chain: ChainState? = null
@@ -59,6 +67,7 @@ class DadoViewModel(
         viewModelScope.launch {
             val key = userKeyProvider()
             userKey = key
+            evidenceEligible = evidenceEligibleProvider()
             progressStore.load(key)?.let { progress ->
                 val game = DadoGameState.fromProgress(progress)
                 _uiState.update { it.copy(game = game) }
@@ -106,12 +115,32 @@ class DadoViewModel(
 
     fun onAnswerSelected(value: Double) {
         val state = _uiState.value
-        if (!state.exercisePending || state.isAnswered || state.options.isEmpty()) return
+        if (!state.exercisePending || state.isAnswered || state.options.isEmpty() || state.awaitingEvidence) return
         timerJob?.cancel()
         _uiState.update {
             it.copy(isAnswered = true, selectedValue = value, correctValue = correctValue, howToUnlocked = true)
         }
         answerHandler?.invoke(value == correctValue)
+    }
+
+    /** El estudiante tomó o eligió la foto de su procedimiento: se guarda y recién entonces aparecen las opciones. */
+    fun onEvidencePicked(source: String) {
+        val saver = evidenceSaver ?: return
+        val state = _uiState.value
+        if (!state.exercisePending || !state.awaitingEvidence || state.evidenceUploading) return
+
+        val token = exerciseToken
+        val difficultyName = state.game.difficulty.displayName
+        val categories = currentCategories
+        _uiState.update { it.copy(evidenceUploading = true, evidenceError = false) }
+        viewModelScope.launch {
+            val saved = saver.save(source, difficultyName, categories)
+            if (token != exerciseToken) return@launch   // el ejercicio cambió mientras se guardaba
+            _uiState.update {
+                if (saved) it.copy(evidenceUploading = false, awaitingEvidence = false)
+                else it.copy(evidenceUploading = false, evidenceError = true)
+            }
+        }
     }
 
     fun onHowToClick() {
@@ -136,8 +165,11 @@ class DadoViewModel(
         val difficulty = DadoRules.effectiveDifficulty(game.mode, game.difficulty)
         val exercise = exerciseGenerator.generate(difficulty)
 
+        // La foto se pide una sola vez por tirada: en Normal/Rush los pasos siguientes ya no la piden
+        val needsEvidence = evidenceEligible && DadoRules.needsEvidence(game.mode, game.difficulty)
+        currentCategories = exercise.operations.map { it.category }.distinct()
         _uiState.update {
-            it.clearedExercise().copy(exercisePending = true)
+            it.clearedExercise().copy(exercisePending = true, awaitingEvidence = needsEvidence)
         }
         if (game.mode == GameMode.DIRECTO) {
             showDirecto(exercise, game.allowNegatives)
@@ -150,6 +182,7 @@ class DadoViewModel(
     /** Modo Directo: se muestra la expresión completa y se resuelve respetando la jerarquía. */
     private fun showDirecto(exercise: Exercise, allowNegatives: Boolean) {
         val evaluation = HierarchyEvaluator.evaluate(exercise.terms, exercise.operations, allowNegatives)
+        currentCategories = evaluation.operations.map { it.category }.distinct()
         val equation = ExpressionFormatter.display(exercise.terms, evaluation.operations) + " ="
         presentExercise(equation, DadoNote.Hierarchy, evaluation.result, evaluation.steps) { correct ->
             if (correct) {
@@ -281,6 +314,7 @@ class DadoViewModel(
     }
 
     private fun cancelJobs() {
+        exerciseToken++
         flowJob?.cancel()
         timerJob?.cancel()
     }
@@ -303,6 +337,9 @@ class DadoViewModel(
         exercisePending = false,
         howToUnlocked = false,
         steps = emptyList(),
+        awaitingEvidence = false,
+        evidenceUploading = false,
+        evidenceError = false,
         showTimer = false,
         timerProgress = 1f
     )

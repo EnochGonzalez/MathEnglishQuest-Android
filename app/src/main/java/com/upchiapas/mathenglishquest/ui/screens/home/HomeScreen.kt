@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.upchiapas.mathenglishquest.R
+import com.upchiapas.mathenglishquest.data.model.UserRole
 import com.upchiapas.mathenglishquest.ui.rememberAppViewModelFactory
 import com.upchiapas.mathenglishquest.ui.components.ChunkyCard
 import com.upchiapas.mathenglishquest.ui.components.UserTopHeader
@@ -48,6 +49,7 @@ fun HomeScreen(
         onNavigateToDado = { navController.navigate(Screen.Dado.route) },
         onNavigateToNumeros = { navController.navigate(Screen.Numeros.route) },
         onNavigateToFrases = { navController.navigate(Screen.Frases.route) },
+        onNavigateToPortfolio = { navController.navigate(Screen.Portfolio.route) },
         onLogout = {
             viewModel.logout()
             navController.navigate(Screen.Login.route) {
@@ -63,6 +65,7 @@ fun HomeScreenContent(
     onNavigateToDado: () -> Unit,
     onNavigateToNumeros: () -> Unit,
     onNavigateToFrases: () -> Unit,
+    onNavigateToPortfolio: () -> Unit,
     onLogout: () -> Unit
 ) {
     val colors = AppTheme.colors
@@ -145,6 +148,20 @@ fun HomeScreenContent(
                 iconColor = colors.redSoftText,
                 onClick = onNavigateToFrases
             )
+
+            // Solo estudiantes con cuenta: los invitados no suben evidencias y los maestros tendrán "Mi Clase"
+            if (uiState.role == UserRole.ESTUDIANTE) {
+                Spacer(modifier = Modifier.height(7.dp))
+
+                ModuleCard(
+                    title = "Mi Portafolio",
+                    description = "Tus evidencias de trabajo en papel",
+                    iconRes = R.drawable.ic_folder,
+                    iconBgColor = colors.yellowSoft,
+                    iconColor = colors.yellowSoftText,
+                    onClick = onNavigateToPortfolio
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
         }

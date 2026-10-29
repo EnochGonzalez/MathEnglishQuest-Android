@@ -33,20 +33,21 @@ sealed class BottomNavItem(
     object Dado : BottomNavItem(Screen.Dado.route, "Dado", R.drawable.ic_dice)
     object Numeros : BottomNavItem(Screen.Numeros.route, "Números", R.drawable.ic_letters)
     object Frases : BottomNavItem(Screen.Frases.route, "Frases", R.drawable.ic_chat)
+    object Portafolio : BottomNavItem(Screen.Portfolio.route, "Portafolio", R.drawable.ic_folder)
+
+    companion object {
+        /** Los 4 módulos que ven todos (invitados incluidos). */
+        val base: List<BottomNavItem> get() = listOf(Home, Dado, Numeros, Frases)
+    }
 }
 
 @Composable
 fun BottomNavBar(
     currentRoute: String?,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    items: List<BottomNavItem> = BottomNavItem.base
 ) {
     val colors = AppTheme.colors
-    val items = listOf(
-        BottomNavItem.Home,
-        BottomNavItem.Dado,
-        BottomNavItem.Numeros,
-        BottomNavItem.Frases
-    )
 
     Column(
         modifier = Modifier

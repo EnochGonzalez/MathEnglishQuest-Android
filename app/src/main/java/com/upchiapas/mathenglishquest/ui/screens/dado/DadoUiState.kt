@@ -37,6 +37,12 @@ data class DadoUiState(
     val howToUnlocked: Boolean = false,
     val steps: List<ExerciseStep> = emptyList(),
 
+    // Foto de evidencia (estudiantes con cuenta, desde Medio en Directo y Difícil en Normal)
+    /** true = la ecuación ya se ve, pero las opciones esperan a que se suba la foto del procedimiento. */
+    val awaitingEvidence: Boolean = false,
+    val evidenceUploading: Boolean = false,
+    val evidenceError: Boolean = false,
+
     // Rush
     val showTimer: Boolean = false,
     val timerProgress: Float = 1f,
@@ -47,7 +53,7 @@ data class DadoUiState(
     val canRoll: Boolean get() = !exercisePending && !game.isGameOver
 
     /** El comodín cuesta media vida: necesita ejercicio activo y vidas. */
-    val canUseWildcard: Boolean get() = exercisePending && game.halfHearts > 0
+    val canUseWildcard: Boolean get() = exercisePending && game.halfHearts > 0 && !evidenceUploading
 
     /** "Cómo se resuelve" se habilita al responder (acierto o error) y nunca en Rush. */
     val canOpenHowTo: Boolean get() = game.mode != GameMode.RUSH && howToUnlocked

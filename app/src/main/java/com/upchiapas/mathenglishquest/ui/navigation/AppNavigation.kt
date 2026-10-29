@@ -5,8 +5,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -14,7 +18,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.upchiapas.mathenglishquest.data.model.UserRole
+import com.upchiapas.mathenglishquest.ui.MainViewModel
 import com.upchiapas.mathenglishquest.ui.components.BottomNavBar
+import com.upchiapas.mathenglishquest.ui.components.BottomNavItem
+import com.upchiapas.mathenglishquest.ui.rememberAppViewModelFactory
 import com.upchiapas.mathenglishquest.ui.screens.auth.LoginScreen
 import com.upchiapas.mathenglishquest.ui.screens.auth.RegisterRoleScreen
 import com.upchiapas.mathenglishquest.ui.screens.auth.RegisterStudentScreen
@@ -24,6 +32,7 @@ import com.upchiapas.mathenglishquest.ui.screens.dado.DadoScreen
 import com.upchiapas.mathenglishquest.ui.screens.frases.FrasesScreen
 import com.upchiapas.mathenglishquest.ui.screens.home.HomeScreen
 import com.upchiapas.mathenglishquest.ui.screens.numeros.NumerosScreen
+import com.upchiapas.mathenglishquest.ui.screens.portfolio.PortfolioScreen
 import com.upchiapas.mathenglishquest.ui.screens.splash.SplashDestination
 import com.upchiapas.mathenglishquest.ui.screens.splash.SplashScreen
 import com.upchiapas.mathenglishquest.ui.theme.AppTheme
@@ -33,7 +42,8 @@ private val bottomBarRoutes = setOf(
     Screen.Home.route,
     Screen.Dado.route,
     Screen.Numeros.route,
-    Screen.Frases.route
+    Screen.Frases.route,
+    Screen.Portfolio.route
 )
 
 @Composable
@@ -41,6 +51,16 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    // Los estudiantes con cuenta tienen un quinto ícono: Portafolio
+    val mainViewModel: MainViewModel = viewModel(factory = rememberAppViewModelFactory())
+    val mainState by mainViewModel.uiState.collectAsState()
+    LaunchedEffect(currentRoute) {
+        if (currentRoute in bottomBarRoutes) mainViewModel.refresh()
+    }
+    val navItems = remember(mainState.role) {
+        if (mainState.role == UserRole.ESTUDIANTE) BottomNavItem.base + BottomNavItem.Portafolio else BottomNavItem.base
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -50,6 +70,7 @@ fun AppNavigation() {
             if (currentRoute in bottomBarRoutes) {
                 BottomNavBar(
                     currentRoute = currentRoute,
+                    items = navItems,
                     onNavigate = { targetRoute ->
                         if (targetRoute != currentRoute) {
                             navController.navigate(targetRoute) {
@@ -126,6 +147,7 @@ fun AppNavigation() {
             composable(Screen.Dado.route) { DadoScreen() }
             composable(Screen.Numeros.route) { NumerosScreen() }
             composable(Screen.Frases.route) { FrasesScreen() }
+            composable(Screen.Portfolio.route) { PortfolioScreen() }
         }
     }
 }

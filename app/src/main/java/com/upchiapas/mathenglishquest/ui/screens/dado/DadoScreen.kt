@@ -1,5 +1,9 @@
 package com.upchiapas.mathenglishquest.ui.screens.dado
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -17,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,6 +30,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -32,6 +38,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -39,12 +48,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.net.Uri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.upchiapas.mathenglishquest.R
 import com.upchiapas.mathenglishquest.data.model.Difficulty
@@ -58,15 +69,45 @@ import com.upchiapas.mathenglishquest.ui.components.ScreenTitle
 import com.upchiapas.mathenglishquest.ui.rememberAppViewModelFactory
 import com.upchiapas.mathenglishquest.ui.theme.AppText
 import com.upchiapas.mathenglishquest.ui.theme.AppTheme
+import com.upchiapas.mathenglishquest.utils.EvidenceFiles
 
 @Composable
 fun DadoScreen(
     viewModel: DadoViewModel = viewModel(factory = rememberAppViewModelFactory())
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    // Dirección donde la cámara deja la foto. Se guarda aparte por si Android cierra la app mientras se toma.
+    var pendingCaptureUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+
+    val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        val uri = pendingCaptureUri
+        pendingCaptureUri = null
+        if (success && uri != null) viewModel.onEvidencePicked(uri.toString())
+    }
+    val pickPicture = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) viewModel.onEvidencePicked(uri.toString())
+    }
 
     DadoScreenContent(
         state = state,
+        onTakePhoto = {
+            try {
+                val uri = EvidenceFiles.createCaptureUri(context)
+                pendingCaptureUri = uri
+                takePicture.launch(uri)
+            } catch (_: Exception) {
+                Toast.makeText(context, "No se pudo abrir la cámara en este dispositivo", Toast.LENGTH_SHORT).show()
+            }
+        },
+        onPickPhoto = {
+            try {
+                pickPicture.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            } catch (_: Exception) {
+                Toast.makeText(context, "No se pudo abrir la galería en este dispositivo", Toast.LENGTH_SHORT).show()
+            }
+        },
         onModeSelected = viewModel::onModeSelected,
         onDifficultySelected = viewModel::onDifficultySelected,
         onNegativesChanged = viewModel::onNegativesChanged,
@@ -82,6 +123,8 @@ fun DadoScreen(
 @Composable
 fun DadoScreenContent(
     state: DadoUiState,
+    onTakePhoto: () -> Unit,
+    onPickPhoto: () -> Unit,
     onModeSelected: (GameMode) -> Unit,
     onDifficultySelected: (Difficulty) -> Unit,
     onNegativesChanged: (Boolean) -> Unit,
@@ -100,6 +143,15 @@ fun DadoScreenContent(
         onDismiss = onDialogDismissed,
         onGameOverDismissed = onGameOverDismissed
     )
+
+    if (state.evidenceUploading) {
+        ModalDialog(onDismissRequest = {}, dismissible = false) {
+            CircularProgressIndicator(color = colors.purple)
+            Spacer(modifier = Modifier.height(14.dp))
+            ModalTitle("Subiendo tu foto…")
+            ModalText("Espera un momento, no cierres esta pantalla ni vuelvas a tocar el botón de subir foto.")
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -266,8 +318,12 @@ fun DadoScreenContent(
                 },
                 note = when (val note = state.note) {
                     DadoNote.None -> ""
-                    DadoNote.Hierarchy -> "Resuelve respetando la jerarquía (paréntesis primero)"
-                    is DadoNote.ChainStep -> "Paso ${note.current} de ${note.total}"
+                    DadoNote.Hierarchy ->
+                        if (state.awaitingEvidence) EVIDENCE_NOTE
+                        else "Resuelve respetando la jerarquía (paréntesis primero)"
+                    is DadoNote.ChainStep ->
+                        if (state.awaitingEvidence) EVIDENCE_NOTE
+                        else "Paso ${note.current} de ${note.total}"
                     is DadoNote.ChainDone -> "Resultado final: ${note.finalResult}"
                 }
             )
@@ -279,18 +335,26 @@ fun DadoScreenContent(
                 Spacer(modifier = Modifier.height(10.dp))
             }
 
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                state.options.forEach { option ->
-                    AnswerButton(
-                        text = option.text,
-                        isSelected = option.value == state.selectedValue,
-                        isCorrect = option.value == state.correctValue,
-                        isAnswered = state.isAnswered,
-                        onClick = { onAnswerSelected(option.value) }
-                    )
+            if (state.awaitingEvidence) {
+                EvidenceGate(
+                    showError = state.evidenceError,
+                    onTakePhoto = onTakePhoto,
+                    onPickPhoto = onPickPhoto
+                )
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    state.options.forEach { option ->
+                        AnswerButton(
+                            text = option.text,
+                            isSelected = option.value == state.selectedValue,
+                            isCorrect = option.value == state.correctValue,
+                            isAnswered = state.isAnswered,
+                            onClick = { onAnswerSelected(option.value) }
+                        )
+                    }
                 }
             }
         }
@@ -336,7 +400,78 @@ fun DadoScreenContent(
     }
 }
 
+private const val EVIDENCE_NOTE = "Resuélvelo en tu libreta y sube tu procedimiento para poder contestar"
+
 // ---------- Piezas de la pantalla ----------
+
+/** .evidence-gate: pide la foto del procedimiento antes de mostrar las opciones de respuesta. */
+@Composable
+private fun EvidenceGate(
+    showError: Boolean,
+    onTakePhoto: () -> Unit,
+    onPickPhoto: () -> Unit
+) {
+    val colors = AppTheme.colors
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_camera),
+            contentDescription = null,
+            tint = colors.purple,
+            modifier = Modifier.size(40.dp)
+        )
+        Text(
+            text = "Esta dificultad requiere procedimiento. Resuelve el ejercicio de arriba en tu libreta " +
+                "y sube una foto para poder ver las opciones de respuesta.",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            lineHeight = 20.sp,
+            textAlign = TextAlign.Center,
+            color = colors.mute,
+            modifier = Modifier.widthIn(max = 300.dp)
+        )
+        ChunkyButton(
+            onClick = onTakePhoto,
+            depth = 4.dp,
+            shape = RoundedCornerShape(14.dp),
+            contentPadding = PaddingValues(horizontal = 18.dp, vertical = 13.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_camera),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "Tomar foto de mi procedimiento", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+        }
+        SoftActionButton(
+            text = "Elegir una foto de la galería",
+            iconRes = R.drawable.ic_folder,
+            enabled = true,
+            onClick = onPickPhoto,
+            containerColor = colors.blueSoft,
+            borderColor = colors.blue.copy(alpha = 0.3f),
+            contentColor = colors.blueText,
+            fontSize = 12.5.sp
+        )
+        Text(
+            text = if (showError) "No pudimos guardar esa foto. Inténtalo de nuevo o elige otra." else "",
+            fontSize = 11.5.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            color = if (colors.isDark) colors.red else colors.redDeep,
+            modifier = Modifier
+                .widthIn(max = 300.dp)
+                .height(16.dp)
+        )
+    }
+}
 
 /** Tres corazones; la mitad de vida se dibuja con un corazón lleno recortado a la mitad. */
 @Composable

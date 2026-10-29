@@ -13,8 +13,9 @@ object DatabaseProvider {
                 AppDatabase::class.java,
                 "math_english_quest.db"
             )
-                // Versión 2 cambió la tabla de usuarios. Todavía no hay datos reales que conservar,
-                // así que se recrea. Antes de publicar la app hay que escribir migraciones de verdad.
+                // De la 2 a la 3 se conservan los datos. Solo si alguien viene de la versión 1 (que ya no
+                // existe en ningún celular real) se recrea. Cada cambio futuro necesita su propia migración.
+                .addMigrations(MIGRATION_2_3)
                 .fallbackToDestructiveMigration(dropAllTables = true)
                 .build()
             INSTANCE = instance
