@@ -28,11 +28,13 @@ import com.upchiapas.mathenglishquest.ui.screens.auth.RegisterRoleScreen
 import com.upchiapas.mathenglishquest.ui.screens.auth.RegisterStudentScreen
 import com.upchiapas.mathenglishquest.ui.screens.auth.RegisterTeacherScreen
 import com.upchiapas.mathenglishquest.ui.screens.auth.TeacherCodeScreen
+import com.upchiapas.mathenglishquest.ui.screens.clase.ClassScreen
 import com.upchiapas.mathenglishquest.ui.screens.dado.DadoScreen
 import com.upchiapas.mathenglishquest.ui.screens.frases.FrasesScreen
 import com.upchiapas.mathenglishquest.ui.screens.home.HomeScreen
 import com.upchiapas.mathenglishquest.ui.screens.numeros.NumerosScreen
 import com.upchiapas.mathenglishquest.ui.screens.portfolio.PortfolioScreen
+import com.upchiapas.mathenglishquest.ui.screens.portfolio.StudentPortfolioScreen
 import com.upchiapas.mathenglishquest.ui.screens.splash.SplashDestination
 import com.upchiapas.mathenglishquest.ui.screens.splash.SplashScreen
 import com.upchiapas.mathenglishquest.ui.theme.AppTheme
@@ -43,7 +45,9 @@ private val bottomBarRoutes = setOf(
     Screen.Dado.route,
     Screen.Numeros.route,
     Screen.Frases.route,
-    Screen.Portfolio.route
+    Screen.Portfolio.route,
+    Screen.Clase.route,
+    Screen.ClaseStudent.route
 )
 
 @Composable
@@ -58,9 +62,16 @@ fun AppNavigation() {
     LaunchedEffect(currentRoute) {
         if (currentRoute in bottomBarRoutes) mainViewModel.refresh()
     }
+    // Estudiantes con cuenta: Portafolio. Maestros: Clase. Invitados: solo los 4 módulos.
     val navItems = remember(mainState.role) {
-        if (mainState.role == UserRole.ESTUDIANTE) BottomNavItem.base + BottomNavItem.Portafolio else BottomNavItem.base
+        when (mainState.role) {
+            UserRole.ESTUDIANTE -> BottomNavItem.base + BottomNavItem.Portafolio
+            UserRole.MAESTRO -> BottomNavItem.base + BottomNavItem.Clase
+            UserRole.INVITADO -> BottomNavItem.base
+        }
     }
+    // Mientras el maestro mira el portafolio de un estudiante, el ícono resaltado sigue siendo "Clase"
+    val highlightedRoute = if (currentRoute == Screen.ClaseStudent.route) Screen.Clase.route else currentRoute
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -69,7 +80,7 @@ fun AppNavigation() {
         bottomBar = {
             if (currentRoute in bottomBarRoutes) {
                 BottomNavBar(
-                    currentRoute = currentRoute,
+                    currentRoute = highlightedRoute,
                     items = navItems,
                     onNavigate = { targetRoute ->
                         if (targetRoute != currentRoute) {
@@ -148,6 +159,16 @@ fun AppNavigation() {
             composable(Screen.Numeros.route) { NumerosScreen() }
             composable(Screen.Frases.route) { FrasesScreen() }
             composable(Screen.Portfolio.route) { PortfolioScreen() }
+            composable(Screen.Clase.route) {
+                ClassScreen(onOpenStudent = { id -> navController.navigate(Screen.ClaseStudent.createRoute(id)) })
+            }
+            composable(
+                route = Screen.ClaseStudent.route,
+                arguments = listOf(navArgument(Screen.ClaseStudent.ARG_STUDENT_ID) { type = NavType.IntType })
+            ) { backStackEntry ->
+                val studentId = backStackEntry.arguments?.getInt(Screen.ClaseStudent.ARG_STUDENT_ID) ?: -1
+                StudentPortfolioScreen(studentId = studentId, onBack = { navController.popBackStack() })
+            }
         }
     }
 }

@@ -55,6 +55,7 @@ class DadoViewModel(
     private var userKey: String? = null
     private var evidenceEligible = false
     private var currentCategories: List<String> = emptyList()
+    private var currentExerciseText: String = ""
     /** Sube cada vez que el ejercicio se reinicia: así una foto que termina tarde no desbloquea otro ejercicio. */
     private var exerciseToken = 0
     private var correctValue: Double = 0.0
@@ -132,9 +133,10 @@ class DadoViewModel(
         val token = exerciseToken
         val difficultyName = state.game.difficulty.displayName
         val categories = currentCategories
+        val exerciseText = currentExerciseText
         _uiState.update { it.copy(evidenceUploading = true, evidenceError = false) }
         viewModelScope.launch {
-            val saved = saver.save(source, difficultyName, categories)
+            val saved = saver.save(source, difficultyName, categories, exerciseText)
             if (token != exerciseToken) return@launch   // el ejercicio cambió mientras se guardaba
             _uiState.update {
                 if (saved) it.copy(evidenceUploading = false, awaitingEvidence = false)
@@ -168,6 +170,7 @@ class DadoViewModel(
         // La foto se pide una sola vez por tirada: en Normal/Rush los pasos siguientes ya no la piden
         val needsEvidence = evidenceEligible && DadoRules.needsEvidence(game.mode, game.difficulty)
         currentCategories = exercise.operations.map { it.category }.distinct()
+        currentExerciseText = ExpressionFormatter.chain(exercise.terms, exercise.operations)
         _uiState.update {
             it.clearedExercise().copy(exercisePending = true, awaitingEvidence = needsEvidence)
         }
@@ -183,7 +186,9 @@ class DadoViewModel(
     private fun showDirecto(exercise: Exercise, allowNegatives: Boolean) {
         val evaluation = HierarchyEvaluator.evaluate(exercise.terms, exercise.operations, allowNegatives)
         currentCategories = evaluation.operations.map { it.category }.distinct()
-        val equation = ExpressionFormatter.display(exercise.terms, evaluation.operations) + " ="
+        val expression = ExpressionFormatter.display(exercise.terms, evaluation.operations)
+        currentExerciseText = expression
+        val equation = "$expression ="
         presentExercise(equation, DadoNote.Hierarchy, evaluation.result, evaluation.steps) { correct ->
             if (correct) {
                 registerCorrect()

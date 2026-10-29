@@ -50,6 +50,7 @@ fun HomeScreen(
         onNavigateToNumeros = { navController.navigate(Screen.Numeros.route) },
         onNavigateToFrases = { navController.navigate(Screen.Frases.route) },
         onNavigateToPortfolio = { navController.navigate(Screen.Portfolio.route) },
+        onNavigateToClase = { navController.navigate(Screen.Clase.route) },
         onLogout = {
             viewModel.logout()
             navController.navigate(Screen.Login.route) {
@@ -66,6 +67,7 @@ fun HomeScreenContent(
     onNavigateToNumeros: () -> Unit,
     onNavigateToFrases: () -> Unit,
     onNavigateToPortfolio: () -> Unit,
+    onNavigateToClase: () -> Unit,
     onLogout: () -> Unit
 ) {
     val colors = AppTheme.colors
@@ -160,6 +162,20 @@ fun HomeScreenContent(
                     iconBgColor = colors.yellowSoft,
                     iconColor = colors.yellowSoftText,
                     onClick = onNavigateToPortfolio
+                )
+            }
+
+            // Solo maestros: el panel para ver a sus estudiantes y sus evidencias
+            if (uiState.role == UserRole.MAESTRO) {
+                Spacer(modifier = Modifier.height(7.dp))
+
+                ModuleCard(
+                    title = "Mi Clase",
+                    description = "Mira a tus estudiantes y su progreso",
+                    iconRes = R.drawable.ic_cap,
+                    iconBgColor = colors.blueSoft,
+                    iconColor = colors.blueSoftText,
+                    onClick = onNavigateToClase
                 )
             }
 

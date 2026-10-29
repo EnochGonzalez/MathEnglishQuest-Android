@@ -77,4 +77,23 @@ class PortfolioGroupingTest {
         val day = PortfolioGrouping.groupByDay(listOf(entry(1, millis(2026, 10, 31, 22))), tz)[0].dayStartMillis
         assertEquals("Ayer", PortfolioGrouping.dayLabel(day, now, tz, es))
     }
+
+    @Test
+    fun etiqueta_aPartirDeUnaMarcaDeTiempoCualquiera() {
+        val now = millis(2026, 10, 28, 14)
+        assertEquals("Hoy", PortfolioGrouping.dayLabelOf(millis(2026, 10, 28, 3), now, tz, es))
+        assertEquals("Ayer", PortfolioGrouping.dayLabelOf(millis(2026, 10, 27, 23, 59), now, tz, es))
+    }
+
+    @Test
+    fun filtro_porDificultad() {
+        val e = listOf(
+            EvidenceEntry(1, "a", 1, "Fácil", listOf("Suma")),
+            EvidenceEntry(2, "b", 2, "Medio", listOf("Suma")),
+            EvidenceEntry(3, "c", 3, "Medio", listOf("Resta"))
+        )
+        assertEquals(listOf(1, 2, 3), PortfolioFilter.byDifficulty(e, null).map { it.id })
+        assertEquals(listOf(2, 3), PortfolioFilter.byDifficulty(e, "Medio").map { it.id })
+        assertEquals(emptyList<EvidenceEntry>(), PortfolioFilter.byDifficulty(e, "Difícil"))
+    }
 }

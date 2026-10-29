@@ -4,6 +4,7 @@ import android.content.Context
 import com.upchiapas.mathenglishquest.data.local.DatabaseProvider
 import com.upchiapas.mathenglishquest.data.local.SessionManager
 import com.upchiapas.mathenglishquest.data.repository.AuthRepository
+import com.upchiapas.mathenglishquest.data.repository.ClassRepository
 import com.upchiapas.mathenglishquest.data.repository.DadoProgressRepository
 import com.upchiapas.mathenglishquest.data.repository.EvidenceRepository
 
@@ -18,6 +19,7 @@ class AppContainer(context: Context) {
     val authRepository = AuthRepository(database.usuarioDao(), sessionManager)
     val dadoProgressRepository = DadoProgressRepository(context)
     val evidenceRepository = EvidenceRepository(context, database.evidenciaDao(), sessionManager)
+    val classRepository = ClassRepository(database.usuarioDao(), sessionManager, evidenceRepository)
 
     companion object {
         @Volatile private var INSTANCE: AppContainer? = null

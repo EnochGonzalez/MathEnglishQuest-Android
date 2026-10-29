@@ -11,7 +11,9 @@ data class EvidenceEntry(
     val imageFileName: String,
     val dateMillis: Long,
     val difficulty: String,
-    val categories: List<String>
+    val categories: List<String>,
+    /** El ejercicio tal como lo vio el estudiante (por ejemplo "3 + (4 × 2)"). Vacío en fotos antiguas. */
+    val exercise: String = ""
 )
 
 /** Evidencias de un mismo día. [dayStartMillis] es la medianoche de ese día. */
@@ -52,6 +54,14 @@ object PortfolioGrouping {
         val pattern = if (sameYear) "d 'de' MMMM" else "d 'de' MMMM 'de' yyyy"
         return SimpleDateFormat(pattern, locale).apply { this.timeZone = timeZone }.format(dayStartMillis)
     }
+
+    /** Igual que [dayLabel], pero a partir de cualquier momento del día (no solo la medianoche). */
+    fun dayLabelOf(
+        timestampMillis: Long,
+        nowMillis: Long = System.currentTimeMillis(),
+        timeZone: TimeZone = TimeZone.getDefault(),
+        locale: Locale = Locale("es", "MX")
+    ): String = dayLabel(startOfDay(timestampMillis, timeZone), nowMillis, timeZone, locale)
 
     private fun startOfDay(millis: Long, timeZone: TimeZone): Long =
         Calendar.getInstance(timeZone).apply {

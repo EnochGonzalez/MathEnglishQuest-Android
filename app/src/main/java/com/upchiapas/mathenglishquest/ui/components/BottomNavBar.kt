@@ -34,6 +34,7 @@ sealed class BottomNavItem(
     object Numeros : BottomNavItem(Screen.Numeros.route, "Números", R.drawable.ic_letters)
     object Frases : BottomNavItem(Screen.Frases.route, "Frases", R.drawable.ic_chat)
     object Portafolio : BottomNavItem(Screen.Portfolio.route, "Portafolio", R.drawable.ic_folder)
+    object Clase : BottomNavItem(Screen.Clase.route, "Clase", R.drawable.ic_cap)
 
     companion object {
         /** Los 4 módulos que ven todos (invitados incluidos). */
@@ -73,9 +74,7 @@ fun BottomNavBar(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier
                         .weight(1f)
-                        .clickable {
-                            if (!isSelected) onNavigate(item.route)
-                        }
+                        .clickable { onNavigate(item.route) }
                         .padding(start = 4.dp, end = 4.dp, top = 10.dp, bottom = 12.dp)
                 ) {
                     Icon(

@@ -38,4 +38,10 @@ object ExpressionFormatter {
             }
         }
     }
+
+    /** Texto de una cadena de pasos (modos Normal y Rush), de izquierda a derecha y sin paréntesis: "5 + 3 - 2". */
+    fun chain(terms: List<Int>, operations: List<Operation>): String = buildString {
+        append(terms.first())
+        for (k in operations.indices) append(" ${operations[k].symbol} ${terms[k + 1]}")
+    }
 }

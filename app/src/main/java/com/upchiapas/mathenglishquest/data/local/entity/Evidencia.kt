@@ -17,5 +17,7 @@ data class Evidencia(
     val fecha: Long,
     val dificultad: String,
     /** Operaciones del ejercicio separadas por "|" (por ejemplo "Suma|Resta"). */
-    val categorias: String
+    val categorias: String,
+    /** El ejercicio tal como lo vio el estudiante (por ejemplo "3 + (4 × 2)"). Vacío en fotos anteriores a la versión 4. */
+    val ejercicio: String
 )

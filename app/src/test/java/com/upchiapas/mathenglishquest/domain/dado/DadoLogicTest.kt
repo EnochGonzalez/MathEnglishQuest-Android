@@ -242,4 +242,11 @@ class DadoLogicTest {
     fun evidencia_rushNunca() {
         Difficulty.entries.forEach { assertFalse(DadoRules.needsEvidence(GameMode.RUSH, it)) }
     }
+
+    @Test
+    fun formato_cadenaDeIzquierdaADerechaSinParentesis() {
+        assertEquals("5 + 3 - 2", ExpressionFormatter.chain(listOf(5, 3, 2), listOf(S, R)))
+        assertEquals("7", ExpressionFormatter.chain(listOf(7), emptyList()))
+        assertEquals("2 × 3 ÷ 4", ExpressionFormatter.chain(listOf(2, 3, 4), listOf(M, D)))
+    }
 }

@@ -27,7 +27,12 @@ class EvidenceRepository(
 
     private val appContext = context.applicationContext
 
-    override suspend fun save(source: String, difficultyName: String, categories: List<String>): Boolean {
+    override suspend fun save(
+        source: String,
+        difficultyName: String,
+        categories: List<String>,
+        exerciseText: String
+    ): Boolean {
         val userId = session.userId()
         if (userId == null) {
             Log.e(TAG, "No hay una cuenta con sesión abierta: las evidencias solo se guardan para estudiantes con cuenta")
@@ -51,7 +56,8 @@ class EvidenceRepository(
                     rutaImagen = relativeName,
                     fecha = now,
                     dificultad = difficultyName,
-                    categorias = categories.joinToString(SEPARATOR)
+                    categorias = categories.joinToString(SEPARATOR),
+                    ejercicio = exerciseText
                 )
             )
             EvidenceFiles.deleteTemp(appContext, uri)
@@ -66,8 +72,12 @@ class EvidenceRepository(
     /** Evidencias del usuario con sesión abierta, de la más reciente a la más antigua. */
     fun observeMine(): Flow<List<EvidenceEntry>> {
         val userId = session.userId() ?: return emptyFlow()
-        return evidenciaDao.observarPorUsuario(userId).map { list -> list.map { it.toEntry() } }
+        return observeFor(userId)
     }
+
+    /** Evidencias de un usuario concreto (el maestro las usa para ver el portafolio de sus estudiantes). */
+    fun observeFor(userId: Int): Flow<List<EvidenceEntry>> =
+        evidenciaDao.observarPorUsuario(userId).map { list -> list.map { it.toEntry() } }
 
     fun fileFor(entry: EvidenceEntry): File = File(appContext.filesDir, entry.imageFileName)
 
@@ -76,7 +86,8 @@ class EvidenceRepository(
         imageFileName = rutaImagen,
         dateMillis = fecha,
         difficulty = dificultad,
-        categories = categorias.split(SEPARATOR).filter { it.isNotBlank() }
+        categories = categorias.split(SEPARATOR).filter { it.isNotBlank() },
+        exercise = ejercicio
     )
 
     private companion object {
