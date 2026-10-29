@@ -12,7 +12,11 @@ object DatabaseProvider {
                 context.applicationContext,
                 AppDatabase::class.java,
                 "math_english_quest.db"
-            ).build()
+            )
+                // Versión 2 cambió la tabla de usuarios. Todavía no hay datos reales que conservar,
+                // así que se recrea. Antes de publicar la app hay que escribir migraciones de verdad.
+                .fallbackToDestructiveMigration(dropAllTables = true)
+                .build()
             INSTANCE = instance
             instance
         }

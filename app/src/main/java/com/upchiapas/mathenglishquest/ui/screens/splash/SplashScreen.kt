@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.upchiapas.mathenglishquest.R
+import com.upchiapas.mathenglishquest.ui.rememberAppViewModelFactory
 import com.upchiapas.mathenglishquest.ui.components.DiceLogo
 import com.upchiapas.mathenglishquest.ui.theme.AppTheme
 import com.upchiapas.mathenglishquest.utils.rememberSoundPlayer
@@ -48,8 +49,8 @@ private val PurpleLight = Color(0xFFC084FC)
 
 @Composable
 fun SplashScreen(
-    onFinished: () -> Unit,
-    viewModel: SplashViewModel = viewModel()
+    onFinished: (SplashDestination) -> Unit,
+    viewModel: SplashViewModel = viewModel(factory = rememberAppViewModelFactory())
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val soundPlayer = rememberSoundPlayer()
@@ -59,8 +60,8 @@ fun SplashScreen(
         soundPlayer.play(R.raw.splash_jingle)
     }
 
-    LaunchedEffect(uiState.isFinished) {
-        if (uiState.isFinished) onFinished()
+    LaunchedEffect(uiState.destination) {
+        uiState.destination?.let(onFinished)
     }
 
     SplashContent()

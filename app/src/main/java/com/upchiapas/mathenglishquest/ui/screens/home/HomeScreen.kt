@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.upchiapas.mathenglishquest.R
+import com.upchiapas.mathenglishquest.ui.rememberAppViewModelFactory
 import com.upchiapas.mathenglishquest.ui.components.ChunkyCard
 import com.upchiapas.mathenglishquest.ui.components.UserTopHeader
 import com.upchiapas.mathenglishquest.ui.navigation.Screen
@@ -38,7 +39,7 @@ import com.upchiapas.mathenglishquest.ui.theme.AppTheme
 @Composable
 fun HomeScreen(
     navController: NavHostController,
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel = viewModel(factory = rememberAppViewModelFactory())
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -46,7 +47,13 @@ fun HomeScreen(
         uiState = uiState,
         onNavigateToDado = { navController.navigate(Screen.Dado.route) },
         onNavigateToNumeros = { navController.navigate(Screen.Numeros.route) },
-        onNavigateToFrases = { navController.navigate(Screen.Frases.route) }
+        onNavigateToFrases = { navController.navigate(Screen.Frases.route) },
+        onLogout = {
+            viewModel.logout()
+            navController.navigate(Screen.Login.route) {
+                popUpTo(Screen.Home.route) { inclusive = true }
+            }
+        }
     )
 }
 
@@ -55,7 +62,8 @@ fun HomeScreenContent(
     uiState: HomeUiState,
     onNavigateToDado: () -> Unit,
     onNavigateToNumeros: () -> Unit,
-    onNavigateToFrases: () -> Unit
+    onNavigateToFrases: () -> Unit,
+    onLogout: () -> Unit
 ) {
     val colors = AppTheme.colors
 
@@ -64,7 +72,7 @@ fun HomeScreenContent(
             .fillMaxSize()
             .background(colors.background)
     ) {
-        UserTopHeader(userName = uiState.userName, role = uiState.role)
+        UserTopHeader(userName = uiState.userName, role = uiState.role, onLogoutClick = onLogout)
 
         Column(
             modifier = Modifier
