@@ -14,7 +14,44 @@ class NumerosViewModel : ViewModel() {
     }
 
     fun selectCategory(category: NumberCategory) {
-        val numbers = when (category) {
+        val numbers = getCategoryNumbers(category)
+        _uiState.value = NumerosUiState(
+            selectedCategory = category,
+            selectedDecade = null,
+            numbersList = numbers
+        )
+    }
+
+    fun onNumberCardClick(item: NumberItem): Boolean {
+        val state = _uiState.value
+        // Si estamos en la categoría Decenas y aún no se ha desplegado una decena
+        if (state.selectedCategory == NumberCategory.DECENAS && state.selectedDecade == null) {
+            if (item.number in 20..90 && item.number % 10 == 0) {
+                selectDecade(item.number)
+                return false // Indica que fue una acción de navegación, no solo audio
+            }
+        }
+        return true // Reproduce el audio normalmente
+    }
+
+    fun selectDecade(decade: Int) {
+        val breakdown = getDecadeBreakdown(decade)
+        _uiState.value = _uiState.value.copy(
+            selectedDecade = decade,
+            numbersList = breakdown
+        )
+    }
+
+    fun clearSelectedDecade() {
+        val category = _uiState.value.selectedCategory
+        _uiState.value = _uiState.value.copy(
+            selectedDecade = null,
+            numbersList = getCategoryNumbers(category)
+        )
+    }
+
+    private fun getCategoryNumbers(category: NumberCategory): List<NumberItem> {
+        return when (category) {
             NumberCategory.BASICOS -> listOf(
                 NumberItem(1, "One"),
                 NumberItem(2, "Two"),
@@ -73,10 +110,25 @@ class NumerosViewModel : ViewModel() {
                 NumberItem(9000, "Nine Thousand")
             )
         }
+    }
 
-        _uiState.value = NumerosUiState(
-            selectedCategory = category,
-            numbersList = numbers
-        )
+    private fun getDecadeBreakdown(decade: Int): List<NumberItem> {
+        val prefix = when (decade) {
+            20 -> "Twenty"
+            30 -> "Thirty"
+            40 -> "Forty"
+            50 -> "Fifty"
+            60 -> "Sixty"
+            70 -> "Seventy"
+            80 -> "Eighty"
+            90 -> "Ninety"
+            else -> return emptyList()
+        }
+        val units = listOf("Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine")
+        return (0..9).map { i ->
+            val num = decade + i
+            val text = if (i == 0) prefix else "$prefix-${units[i]}"
+            NumberItem(num, text)
+        }
     }
 }

@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,21 +96,21 @@ fun HomeScreenContent(
             ) {
                 Column {
                     Text(
-                        text = "TU MISIÓN DE HOY",
+                        text = stringResource(R.string.home_mision_caption),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = Color(0xFF93C5FD)
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = uiState.missionTitle,
+                        text = uiState.missionTitle.asString(),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = colors.onInverse
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = uiState.missionSubtitle,
+                        text = uiState.missionSubtitle.asString(),
                         fontSize = 12.5.sp,
                         fontWeight = FontWeight.SemiBold,
                         lineHeight = 19.sp,
@@ -121,8 +122,8 @@ fun HomeScreenContent(
             Spacer(modifier = Modifier.height(14.dp))
 
             ModuleCard(
-                title = "Módulo del Dado",
-                description = "Retos de matemáticas por dificultad",
+                title = stringResource(R.string.module_dado_title),
+                description = stringResource(R.string.module_dado_desc),
                 iconRes = R.drawable.ic_dice,
                 iconBgColor = colors.purpleSoft,
                 iconColor = colors.purpleSoftText,
@@ -132,8 +133,8 @@ fun HomeScreenContent(
             Spacer(modifier = Modifier.height(7.dp))
 
             ModuleCard(
-                title = "Números en Inglés",
-                description = "Del 1 al 20 y más, con pronunciación",
+                title = stringResource(R.string.module_numeros_title),
+                description = stringResource(R.string.module_numeros_desc),
                 iconRes = R.drawable.ic_letters,
                 iconBgColor = colors.greenSoft,
                 iconColor = colors.greenSoftText,
@@ -143,21 +144,21 @@ fun HomeScreenContent(
             Spacer(modifier = Modifier.height(7.dp))
 
             ModuleCard(
-                title = "Frases en Inglés",
-                description = "Operaciones y vocabulario en inglés",
+                title = stringResource(R.string.module_frases_title),
+                description = stringResource(R.string.module_frases_desc),
                 iconRes = R.drawable.ic_chat,
                 iconBgColor = colors.redSoft,
                 iconColor = colors.redSoftText,
                 onClick = onNavigateToFrases
             )
 
-            // Solo estudiantes con cuenta: los invitados no suben evidencias y los maestros tendrán "Mi Clase"
+            // Solo estudiantes con cuenta
             if (uiState.role == UserRole.ESTUDIANTE) {
                 Spacer(modifier = Modifier.height(7.dp))
 
                 ModuleCard(
-                    title = "Mi Portafolio",
-                    description = "Tus evidencias de trabajo en papel",
+                    title = stringResource(R.string.module_portfolio_title),
+                    description = stringResource(R.string.module_portfolio_desc),
                     iconRes = R.drawable.ic_folder,
                     iconBgColor = colors.yellowSoft,
                     iconColor = colors.yellowSoftText,
@@ -165,13 +166,13 @@ fun HomeScreenContent(
                 )
             }
 
-            // Solo maestros: el panel para ver a sus estudiantes y sus evidencias
+            // Solo maestros
             if (uiState.role == UserRole.MAESTRO) {
                 Spacer(modifier = Modifier.height(7.dp))
 
                 ModuleCard(
-                    title = "Mi Clase",
-                    description = "Mira a tus estudiantes y su progreso",
+                    title = stringResource(R.string.module_clase_title),
+                    description = stringResource(R.string.module_clase_desc),
                     iconRes = R.drawable.ic_cap,
                     iconBgColor = colors.blueSoft,
                     iconColor = colors.blueSoftText,

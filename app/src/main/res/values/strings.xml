@@ -1,3 +1,66 @@
 <resources>
     <string name="app_name">MathEnglishQuest</string>
+
+    <!-- General / Navegación -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_dado">Dado</string>
+    <string name="nav_numeros">Números</string>
+    <string name="nav_frases">Frases</string>
+    <string name="guest_user">Invitado</string>
+    <string name="user_greeting">Hola, %1$s</string>
+    <string name="logout">Cerrar sesión</string>
+    <string name="guest_session_toast">Sesión de invitado</string>
+    <string name="back">Volver</string>
+    <string name="back_to_decenas">Volver a Decenas</string>
+    <string name="continue_text">Continuar</string>
+    <string name="understood">Entendido</string>
+
+    <!-- Módulo Home -->
+    <string name="home_mision_caption">TU MISIÓN DE HOY</string>
+    <string name="home_mision_student_title">Elige un módulo</string>
+    <string name="home_mision_student_subtitle">Practica matemáticas y vocabulario en inglés. Cada racha de 3 desbloquea más dificultad.</string>
+    <string name="home_mision_teacher_title">Elige un módulo o revisa tu clase</string>
+    <string name="home_mision_teacher_subtitle">Puedes practicar los módulos como tus estudiantes, o entrar a Mi Clase para ver su progreso.</string>
+
+    <string name="module_dado_title">Módulo del Dado</string>
+    <string name="module_dado_desc">Retos de matemáticas por dificultad</string>
+    <string name="module_numeros_title">Números en Inglés</string>
+    <string name="module_numeros_desc">Del 1 al 20 y más, con pronunciación</string>
+    <string name="module_frases_title">Frases en Inglés</string>
+    <string name="module_frases_desc">Operaciones y vocabulario en inglés</string>
+    <string name="module_portfolio_title">Mi Portafolio</string>
+    <string name="module_portfolio_desc">Tus evidencias de trabajo en papel</string>
+    <string name="module_clase_title">Mi Clase</string>
+    <string name="module_clase_desc">Mira a tus estudiantes y su progreso</string>
+
+    <!-- Módulo Números -->
+    <string name="numeros_title">Números en Inglés</string>
+    <string name="numeros_subtitle">Toca una tarjeta para escuchar la pronunciación.</string>
+    <string name="category_basicos">Básicos</string>
+    <string name="category_decenas">Decenas</string>
+    <string name="category_centenas">Centenas</string>
+    <string name="category_miles">Miles</string>
+    <string name="decade_title">Decena del %1$d</string>
+
+    <!-- Módulo Frases -->
+    <string name="frases_title">Frases en Inglés</string>
+    <string name="frases_mode_sololetras">Solo letras</string>
+    <string name="frases_mode_numerosyletras">Números y letras</string>
+    <string name="frases_mode_todoeningles">Todo en inglés</string>
+    <string name="frases_choose_result">Elige el resultado en inglés</string>
+    <string name="frases_attempt_count">Intento %1$d de %2$d</string>
+    <string name="frases_touch_speak">Toca y responde en voz alta</string>
+    <string name="frases_voice_correct_inline">¡Correcto! La respuesta era \"%1$s\".</string>
+    <string name="frases_voice_incorrect_inline">Dijiste: \"%1$s\". Inténtalo de nuevo.</string>
+    <string name="frases_modal_answer_was">La respuesta era&#8230;</string>
+    <string name="frases_listen_pronunciation">Escuchar pronunciación</string>
+
+    <string name="voice_dialog_title">Antes de responder por voz</string>
+    <string name="voice_dialog_body">El reconocimiento de voz puede fallar si hay mucho ruido alrededor, hablas muy rápido o el micrófono no te escucha bien. Si eso pasa, no te preocupes: solo vuelve a intentarlo.</string>
+    <string name="voice_not_available">Reconocimiento de voz no disponible en este dispositivo</string>
+
+    <!-- Audio Speech Strings (English) -->
+    <string name="speech_correct">Correct! %1$s</string>
+    <string name="speech_try_again">Try again</string>
+    <string name="speech_answer_was">The correct answer was %1$s</string>
 </resources>

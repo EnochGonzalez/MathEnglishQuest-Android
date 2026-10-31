@@ -2,8 +2,10 @@ package com.upchiapas.mathenglishquest.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.upchiapas.mathenglishquest.R
 import com.upchiapas.mathenglishquest.data.model.UserRole
 import com.upchiapas.mathenglishquest.data.repository.AuthRepository
+import com.upchiapas.mathenglishquest.ui.util.UiText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,13 +28,8 @@ class HomeViewModel(
             _uiState.value = _uiState.value.copy(
                 userName = user.firstName,
                 role = user.role,
-                // Mismos textos que home.js del prototipo
-                missionTitle = if (isTeacher) "Elige un módulo o revisa tu clase" else "Elige un módulo",
-                missionSubtitle = if (isTeacher) {
-                    "Puedes practicar los módulos como tus estudiantes, o entrar a Mi Clase para ver su progreso."
-                } else {
-                    "Practica matemáticas y vocabulario en inglés. Cada racha de 3 desbloquea más dificultad."
-                }
+                missionTitle = if (isTeacher) UiText.StringResource(R.string.home_mision_teacher_title) else UiText.StringResource(R.string.home_mision_student_title),
+                missionSubtitle = if (isTeacher) UiText.StringResource(R.string.home_mision_teacher_subtitle) else UiText.StringResource(R.string.home_mision_student_subtitle)
             )
         }
     }

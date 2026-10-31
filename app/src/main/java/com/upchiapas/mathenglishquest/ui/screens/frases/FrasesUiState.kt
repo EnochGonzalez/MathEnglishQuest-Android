@@ -1,9 +1,13 @@
 package com.upchiapas.mathenglishquest.ui.screens.frases
 
-enum class FrasesMode(val title: String) {
-    SOLO_LETRAS("Solo letras"),
-    NUMEROS_Y_LETRAS("Números y letras"),
-    TODO_EN_INGLES("Todo en inglés")
+import androidx.annotation.StringRes
+import com.upchiapas.mathenglishquest.R
+import com.upchiapas.mathenglishquest.ui.util.UiText
+
+enum class FrasesMode(@StringRes val titleRes: Int) {
+    SOLO_LETRAS(R.string.frases_mode_sololetras),
+    NUMEROS_Y_LETRAS(R.string.frases_mode_numerosyletras),
+    TODO_EN_INGLES(R.string.frases_mode_todoeningles)
 }
 
 data class FrasesQuestion(
@@ -25,6 +29,6 @@ data class FrasesUiState(
     val selectedOption: String? = null,
     val correctOption: String? = null,
     val isAnswered: Boolean = false,
-    val voiceInlineMessage: String? = null,
-    val speechToSpeak: String? = null
+    val voiceInlineMessage: UiText? = null,
+    val speechToSpeak: UiText? = null
 )

@@ -6,8 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -65,10 +66,12 @@ fun FrasesScreen(
 
     LaunchedEffect(uiState.speechToSpeak) {
         uiState.speechToSpeak?.let { speech ->
-            ttsHelper.speak(speech)
+            ttsHelper.speak(speech.asString(context))
             viewModel.clearSpeech()
         }
     }
+
+    val voiceNotAvailableText = stringResource(R.string.voice_not_available)
 
     FrasesScreenContent(
         uiState = uiState,
@@ -84,7 +87,7 @@ fun FrasesScreen(
             } catch (_: Exception) {
                 Toast.makeText(
                     context,
-                    "Reconocimiento de voz no disponible en este dispositivo",
+                    voiceNotAvailableText,
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -125,7 +128,7 @@ fun FrasesScreenContent(
             .padding(20.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        ScreenTitle(iconRes = R.drawable.ic_chat, title = "Frases en Inglés")
+        ScreenTitle(iconRes = R.drawable.ic_chat, title = stringResource(R.string.frases_title))
 
         Spacer(modifier = Modifier.height(15.dp))
 
@@ -152,7 +155,7 @@ fun FrasesScreenContent(
                     contentPadding = PaddingValues(horizontal = 4.dp, vertical = 9.dp)
                 ) {
                     Text(
-                        text = mode.title,
+                        text = stringResource(mode.titleRes),
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.ExtraBold,
                         textAlign = TextAlign.Center,
@@ -195,7 +198,7 @@ fun FrasesScreenContent(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "Elige el resultado en inglés",
+                    text = stringResource(R.string.frases_choose_result),
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colors.mute
@@ -211,7 +214,7 @@ fun FrasesScreenContent(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Intento ${uiState.attemptCount} de 3",
+                        text = stringResource(R.string.frases_attempt_count, uiState.attemptCount, 3),
                         style = AppText.label,
                         color = colors.mute
                     )
@@ -224,20 +227,20 @@ fun FrasesScreenContent(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_mic),
-                            contentDescription = "Micrófono",
+                            contentDescription = stringResource(R.string.frases_touch_speak),
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(9.dp))
                         Text(
-                            text = "Toca y responde en voz alta",
+                            text = stringResource(R.string.frases_touch_speak),
                             style = AppText.button
                         )
                     }
 
-                    if (!uiState.voiceInlineMessage.isNullOrBlank()) {
+                    if (uiState.voiceInlineMessage != null) {
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            text = uiState.voiceInlineMessage,
+                            text = uiState.voiceInlineMessage.asString(),
                             fontSize = 12.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = colors.ink,
@@ -300,7 +303,6 @@ private fun OptionButton(
     val textColor = if (showCorrect || showWrong) Color.White else colors.ink
 
     ChunkyButton(
-        // enabled = true siempre: si estuviera desactivado el botón se vería al 40% y se perdería el verde/rojo
         onClick = { if (!isAnswered) onClick() },
         modifier = Modifier.fillMaxWidth(),
         containerColor = container,
@@ -357,7 +359,7 @@ private fun VoiceResultDialog(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "La respuesta era…",
+                text = stringResource(R.string.frases_modal_answer_was),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = colors.ink,
@@ -395,7 +397,7 @@ private fun VoiceResultDialog(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Escuchar pronunciación",
+                    text = stringResource(R.string.frases_listen_pronunciation),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.ExtraBold,
                     maxLines = 1
@@ -414,7 +416,7 @@ private fun VoiceResultDialog(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
             ) {
                 Text(
-                    text = "Continuar",
+                    text = stringResource(R.string.continue_text),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
@@ -444,7 +446,7 @@ private fun VoiceInstructionDialog(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Antes de responder por voz",
+                text = stringResource(R.string.voice_dialog_title),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = colors.ink,
@@ -454,7 +456,7 @@ private fun VoiceInstructionDialog(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "El reconocimiento de voz puede fallar si hay mucho ruido alrededor, hablas muy rápido o el micrófono no te escucha bien. Si eso pasa, no te preocupes: solo vuelve a intentarlo.",
+                text = stringResource(R.string.voice_dialog_body),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = colors.mute,
@@ -474,7 +476,7 @@ private fun VoiceInstructionDialog(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
             ) {
                 Text(
-                    text = "Entendido",
+                    text = stringResource(R.string.understood),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.ExtraBold
                 )

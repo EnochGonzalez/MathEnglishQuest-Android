@@ -2,6 +2,8 @@ package com.upchiapas.mathenglishquest.ui.screens.frases
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.upchiapas.mathenglishquest.R
+import com.upchiapas.mathenglishquest.ui.util.UiText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -95,7 +97,7 @@ class FrasesViewModel : ViewModel() {
             selectedOption = optionText,
             correctOption = correctWord,
             isAnswered = true,
-            speechToSpeak = if (isCorrect) "Correct! $correctWord" else "Try again"
+            speechToSpeak = if (isCorrect) UiText.StringResource(R.string.speech_correct, listOf(correctWord)) else UiText.StringResource(R.string.speech_try_again)
         )
 
         viewModelScope.launch {
@@ -107,13 +109,12 @@ class FrasesViewModel : ViewModel() {
     fun handleVoiceResult(spokenText: String) {
         val currentQ = _uiState.value.currentQuestion ?: return
         val correctWord = getWord(currentQ.result)
-        val isCorrect = spokenText.contains(correctWord, ignoreCase = true) ||
-                spokenText.contains(currentQ.result.toString(), ignoreCase = true)
+        val isCorrect = isVoiceAnswerCorrect(spokenText, currentQ.result, correctWord)
 
         if (isCorrect) {
             _uiState.value = _uiState.value.copy(
-                voiceInlineMessage = "¡Correcto! La respuesta era \"$correctWord\".",
-                speechToSpeak = "Correct! $correctWord"
+                voiceInlineMessage = UiText.StringResource(R.string.frases_voice_correct_inline, listOf(correctWord)),
+                speechToSpeak = UiText.StringResource(R.string.speech_correct, listOf(correctWord))
             )
             viewModelScope.launch {
                 delay(1500)
@@ -124,24 +125,57 @@ class FrasesViewModel : ViewModel() {
             if (currentAttempts < 3) {
                 _uiState.value = _uiState.value.copy(
                     attemptCount = currentAttempts + 1,
-                    voiceInlineMessage = "Dijiste: \"$spokenText\". Inténtalo de nuevo.",
-                    speechToSpeak = "Try again"
+                    voiceInlineMessage = UiText.StringResource(R.string.frases_voice_incorrect_inline, listOf(spokenText)),
+                    speechToSpeak = UiText.StringResource(R.string.speech_try_again)
                 )
             } else {
                 _uiState.value = _uiState.value.copy(
                     showResultModal = true,
                     resultModalAnswer = correctWord,
                     voiceInlineMessage = null,
-                    speechToSpeak = "The correct answer was $correctWord"
+                    speechToSpeak = UiText.StringResource(R.string.speech_answer_was, listOf(correctWord))
                 )
             }
         }
     }
 
+    private fun isVoiceAnswerCorrect(spokenText: String, targetNumber: Int, targetWord: String): Boolean {
+        val tokens = spokenText.lowercase().split(Regex("[^a-zA-Z0-9]+")).filter { it.isNotBlank() }
+        val targetWordLower = targetWord.lowercase()
+        val targetNumStr = targetNumber.toString()
+
+        val homophones = when (targetNumber) {
+            0 -> setOf("zero", "0")
+            1 -> setOf("one", "1", "won")
+            2 -> setOf("two", "2", "to", "too")
+            3 -> setOf("three", "3")
+            4 -> setOf("four", "4", "for")
+            5 -> setOf("five", "5")
+            6 -> setOf("six", "6")
+            7 -> setOf("seven", "7")
+            8 -> setOf("eight", "8", "ate")
+            9 -> setOf("nine", "9")
+            10 -> setOf("ten", "10")
+            11 -> setOf("eleven", "11")
+            12 -> setOf("twelve", "12")
+            13 -> setOf("thirteen", "13")
+            14 -> setOf("fourteen", "14")
+            15 -> setOf("fifteen", "15")
+            16 -> setOf("sixteen", "16")
+            17 -> setOf("seventeen", "17")
+            18 -> setOf("eighteen", "18")
+            19 -> setOf("nineteen", "19")
+            20 -> setOf("twenty", "20")
+            else -> setOf(targetWordLower, targetNumStr)
+        }
+
+        return tokens.any { token -> token in homophones }
+    }
+
     fun speakAnswer() {
         val answer = _uiState.value.resultModalAnswer
         if (answer.isNotBlank()) {
-            _uiState.value = _uiState.value.copy(speechToSpeak = answer)
+            _uiState.value = _uiState.value.copy(speechToSpeak = UiText.DynamicString(answer))
         }
     }
 
