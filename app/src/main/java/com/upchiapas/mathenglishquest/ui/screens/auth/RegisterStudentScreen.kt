@@ -14,6 +14,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.upchiapas.mathenglishquest.R
+import com.upchiapas.mathenglishquest.integration.qr.QrScanOutcome
+import com.upchiapas.mathenglishquest.integration.qr.rememberClassQrScanner
 import com.upchiapas.mathenglishquest.ui.rememberAppViewModelFactory
 
 @Composable
@@ -24,6 +26,7 @@ fun RegisterStudentScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
+    val qrScanner = rememberClassQrScanner()
 
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) onSuccess()
@@ -70,6 +73,20 @@ fun RegisterStudentScreen(
                 viewModel.register()
             }
         )
+
+        // Alternativa a escribir el código: escanear el QR que muestra el maestro
+        Spacer(modifier = Modifier.height(10.dp))
+        QrScanButton(onClick = {
+            focusManager.clearFocus()
+            qrScanner.scan { outcome ->
+                when (outcome) {
+                    is QrScanOutcome.Scanned -> viewModel.onQrScanned(outcome.rawValue)
+                    QrScanOutcome.Canceled -> Unit
+                    is QrScanOutcome.Failed -> viewModel.onQrScanFailed()
+                }
+            }
+        })
+        QrScanMessage(state.qrMessage)
 
         AuthErrorText(state.error)
 

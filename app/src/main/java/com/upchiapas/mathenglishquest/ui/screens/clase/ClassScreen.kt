@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -43,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.upchiapas.mathenglishquest.R
+import com.upchiapas.mathenglishquest.integration.qr.ClassQrPayload
+import com.upchiapas.mathenglishquest.integration.qr.QrCodeView
 import com.upchiapas.mathenglishquest.domain.clase.ClassRoster
 import com.upchiapas.mathenglishquest.domain.clase.RosterOrder
 import com.upchiapas.mathenglishquest.domain.clase.StudentSummary
@@ -128,6 +131,26 @@ fun ClassScreenContent(
                         lineHeight = 19.sp,
                         color = colors.onInverse.copy(alpha = 0.85f)
                     )
+
+                    // El mismo código en QR: el estudiante lo escanea al registrarse en lugar de escribirlo
+                    state.classCode?.let { code ->
+                        Spacer(modifier = Modifier.height(14.dp))
+                        QrCodeView(
+                            content = ClassQrPayload.encode(code),
+                            contentDescription = stringResource(R.string.qr_content_description, code),
+                            size = 170.dp,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.qr_class_caption),
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center,
+                            color = colors.onInverse.copy(alpha = 0.75f),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
 
