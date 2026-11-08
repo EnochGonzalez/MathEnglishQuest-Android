@@ -63,4 +63,9 @@ class FirestoreDataSource(
     suspend fun crearClase(clase: ClaseDoc) {
         clases().document(clase.codigo).set(clase.toMap()).awaitTask()
     }
+
+    /** Se usa para deshacer un registro de maestro que falló a medias. */
+    suspend fun eliminarClase(codigo: String) {
+        clases().document(codigo).delete().awaitTask()
+    }
 }

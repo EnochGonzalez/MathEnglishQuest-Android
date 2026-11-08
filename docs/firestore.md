@@ -81,12 +81,18 @@ Ejemplo:
 
 **Mi Clase (maestro)**
 - `usuarios where claseId == miCodigo and rol == "estudiante"` ordenado por `nombreCompleto`.
+- La app escucha ese query en tiempo real y copia los estudiantes a Room (caché local).
+- No requiere índice compuesto: se filtra por `claseId` y el rol se descarta en el cliente.
 
 ## Reglas de seguridad
 
 Están en `firebase/firestore.rules`. Se publican en
 **Firestore Database → Reglas**. Resumen: todo exige sesión; cada quien escribe solo su
 perfil; el rol y el correo no se pueden cambiar; se puede leer a quien comparte tu `claseId`.
+
+Sobre `clases/{codigo}`: **leer un código concreto está permitido sin sesión** (para que el
+estudiante sepa si el código existe antes de crear su cuenta), pero **listar** la colección
+exige sesión, así que no se pueden descubrir códigos ajenos.
 
 ## Para la API
 
@@ -97,8 +103,21 @@ Con el SDK de administrador (`firebase-admin`, Node/Java/Python) se tiene acceso
 - Leer/escribir `usuarios` y `clases` sin restricciones.
 - Más adelante: `evidencias` y el progreso del Dado.
 
+## Cómo está implementado en la app
+
+| Pieza | Clase |
+|---|---|
+| Cuentas y contraseñas | `FirebaseAuthDataSource` (Firebase Authentication) |
+| Perfiles y clases | `FirestoreDataSource` (`usuarios`, `clases`) |
+| Copia local para la interfaz | `UsuarioMirror` → Room (`usuarios.firebaseUid`) |
+| Login / registro | `AuthRepository` |
+| Mi Clase | `ClassRepository`: escucha la clase en Firestore y la copia a Room |
+
+Room sigue guardando **evidencias** y la app sigue funcionando sin internet con la última copia.
+Las cuentas creadas antes de Firebase (solo en Room) ya no pueden entrar: hay que registrarse
+otra vez, porque su contraseña nunca salió del teléfono.
+
 ## Pendiente (siguientes entregas)
 
 - `evidencias/{id}` + fotos en **Firebase Storage** (hoy son locales en Room).
 - Progreso del Dado en la nube (hoy en SharedPreferences).
-- Índice compuesto en Firestore para `usuarios`: `claseId` + `rol` + `nombreCompleto`.

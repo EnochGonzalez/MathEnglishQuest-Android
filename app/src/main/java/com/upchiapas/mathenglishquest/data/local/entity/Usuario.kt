@@ -14,5 +14,7 @@ data class Usuario(
     val correo: String,        // siempre en minúsculas
     val passwordHash: String,  // "algoritmo$iteraciones$sal$hash". Nunca se guarda la contraseña en texto plano
     val rol: String,           // "estudiante" o "maestro" (ver UserRole.dbValue)
-    val claseId: String? = null // maestro: su código de clase; estudiante: el código al que se unió
+    val claseId: String? = null, // maestro: su código de clase; estudiante: el código al que se unió
+    /** UID de Firebase Auth. null en las cuentas viejas, creadas antes de migrar a Firebase. */
+    val firebaseUid: String? = null
 )

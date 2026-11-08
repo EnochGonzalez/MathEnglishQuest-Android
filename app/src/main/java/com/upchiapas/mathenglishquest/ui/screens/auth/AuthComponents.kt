@@ -59,6 +59,7 @@ fun AuthError.message(): String = when (this) {
     AuthError.CORREO_EXISTENTE -> "Ya existe una cuenta con ese correo."
     AuthError.CODIGO_INEXISTENTE -> "Ese código de clase no existe. Revísalo con tu maestro(a)."
     AuthError.CREDENCIALES_INCORRECTAS -> "Correo o contraseña incorrectos."
+    AuthError.SIN_CONEXION -> "No hay conexión. Revisa tu internet e inténtalo de nuevo."
     AuthError.DESCONOCIDO -> "Ocurrió un error. Inténtalo de nuevo."
 }
 

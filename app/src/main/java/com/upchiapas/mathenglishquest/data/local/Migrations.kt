@@ -44,3 +44,13 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_evidencias_usuarioId` ON `evidencias` (`usuarioId`)")
     }
 }
+
+/**
+ * Versión 4 -> 5: cada cuenta guarda el UID de Firebase Auth.
+ * Las cuentas que ya existían se quedan con `firebaseUid` en null hasta que vuelvan a entrar.
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `usuarios` ADD COLUMN `firebaseUid` TEXT")
+    }
+}

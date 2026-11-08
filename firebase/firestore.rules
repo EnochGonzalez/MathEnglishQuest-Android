@@ -54,8 +54,12 @@ service cloud.firestore {
     }
 
     match /clases/{codigo} {
-      // Cualquier usuario con sesión necesita leer una clase para unirse con el código.
-      allow read: if autenticado();
+      // Cualquier usuario con sesión puede leer sus clases.
+      allow list: if autenticado();
+
+      // Un código concreto se puede comprobar sin sesión: el estudiante debe saber si el
+      // código existe ANTES de crear su cuenta. Sin permiso de listar, no se pueden enumerar.
+      allow get: if true;
 
       allow create: if autenticado()
         && request.resource.data.maestroUid == request.auth.uid

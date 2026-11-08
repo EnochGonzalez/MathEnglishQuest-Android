@@ -3,23 +3,53 @@ package com.upchiapas.mathenglishquest.di
 import android.content.Context
 import com.upchiapas.mathenglishquest.data.local.DatabaseProvider
 import com.upchiapas.mathenglishquest.data.local.SessionManager
+import com.upchiapas.mathenglishquest.data.remote.FirebaseAuthDataSource
+import com.upchiapas.mathenglishquest.data.remote.FirestoreDataSource
 import com.upchiapas.mathenglishquest.data.repository.AuthRepository
 import com.upchiapas.mathenglishquest.data.repository.ClassRepository
 import com.upchiapas.mathenglishquest.data.repository.DadoProgressRepository
 import com.upchiapas.mathenglishquest.data.repository.EvidenceRepository
+import com.upchiapas.mathenglishquest.data.repository.UsuarioMirror
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
- * Crea y comparte los objetos de la app (base de datos, sesión, repositorios).
+ * Crea y comparte los objetos de la app (base de datos, sesión, Firebase, repositorios).
  * Es una "inyección de dependencias" a mano: sencilla y sin librerías extra.
  */
 class AppContainer(context: Context) {
     private val database = DatabaseProvider.getDatabase(context)
     private val sessionManager = SessionManager(context)
 
-    val authRepository = AuthRepository(database.usuarioDao(), sessionManager)
+    // ---------- Nube ----------
+    private val firebaseAuth = FirebaseAuthDataSource()
+    private val firestore = FirestoreDataSource()
+
+    /** Copia local de los perfiles que vienen de Firestore. */
+    private val usuarioMirror = UsuarioMirror(database.usuarioDao())
+
+    /** Para escuchar cambios de la nube sin atarlos a la pantalla que los pidió. */
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    // ---------- Repositorios ----------
+    val authRepository = AuthRepository(
+        usuarioDao = database.usuarioDao(),
+        session = sessionManager,
+        firebaseAuth = firebaseAuth,
+        firestore = firestore,
+        mirror = usuarioMirror
+    )
     val dadoProgressRepository = DadoProgressRepository(context)
     val evidenceRepository = EvidenceRepository(context, database.evidenciaDao(), sessionManager)
-    val classRepository = ClassRepository(database.usuarioDao(), sessionManager, evidenceRepository)
+    val classRepository = ClassRepository(
+        usuarioDao = database.usuarioDao(),
+        session = sessionManager,
+        evidenceRepository = evidenceRepository,
+        firestore = firestore,
+        mirror = usuarioMirror,
+        scope = appScope
+    )
 
     companion object {
         @Volatile private var INSTANCE: AppContainer? = null

@@ -3,6 +3,7 @@ package com.upchiapas.mathenglishquest.data.local.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import com.upchiapas.mathenglishquest.data.local.entity.Usuario
 
@@ -11,8 +12,14 @@ interface UsuarioDao {
     @Insert
     suspend fun insertar(usuario: Usuario): Long
 
+    @Update
+    suspend fun actualizar(usuario: Usuario)
+
     @Query("SELECT * FROM usuarios WHERE correo = :correo LIMIT 1")
     suspend fun buscarPorCorreo(correo: String): Usuario?
+
+    @Query("SELECT * FROM usuarios WHERE firebaseUid = :uid LIMIT 1")
+    suspend fun buscarPorFirebaseUid(uid: String): Usuario?
 
     @Query("SELECT * FROM usuarios WHERE id = :id LIMIT 1")
     suspend fun buscarPorId(id: Int): Usuario?

@@ -1,14 +1,20 @@
 package com.upchiapas.mathenglishquest.data.repository
 
-import android.database.sqlite.SQLiteConstraintException
+import android.util.Log
 import android.util.Patterns
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.upchiapas.mathenglishquest.data.local.SessionManager
 import com.upchiapas.mathenglishquest.data.local.dao.UsuarioDao
 import com.upchiapas.mathenglishquest.data.local.entity.Usuario
 import com.upchiapas.mathenglishquest.data.model.UserRole
-import com.upchiapas.mathenglishquest.data.security.PasswordHasher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.upchiapas.mathenglishquest.data.remote.FirebaseAuthDataSource
+import com.upchiapas.mathenglishquest.data.remote.FirestoreDataSource
+import com.upchiapas.mathenglishquest.data.remote.model.ClaseDoc
+import com.upchiapas.mathenglishquest.data.remote.model.UsuarioDoc
 import kotlin.random.Random
 
 /** Usuario con sesión abierta, tal como lo necesita la interfaz. */
@@ -30,6 +36,7 @@ enum class AuthError {
     CORREO_EXISTENTE,
     CODIGO_INEXISTENTE,
     CREDENCIALES_INCORRECTAS,
+    SIN_CONEXION,
     DESCONOCIDO
 }
 
@@ -38,27 +45,53 @@ sealed interface AuthResult {
     data class Failure(val error: AuthError) : AuthResult
 }
 
+/**
+ * Entrar y registrarse.
+ *
+ * La cuenta vive en **Firebase Authentication** (que guarda la contraseña cifrada) y el
+ * perfil en **Firestore** (`usuarios/{uid}`). En el teléfono se guarda una copia en Room
+ * ([UsuarioMirror]) para que el resto de la app siga funcionando con ids `Int` y sin internet.
+ */
 class AuthRepository(
     private val usuarioDao: UsuarioDao,
-    private val session: SessionManager
+    private val session: SessionManager,
+    private val firebaseAuth: FirebaseAuthDataSource,
+    private val firestore: FirestoreDataSource,
+    private val mirror: UsuarioMirror
 ) {
 
     // ---------- Sesión ----------
 
-    /** True si hay un invitado, o una cuenta que todavía existe en la base de datos. */
+    /** True si hay un invitado, o una cuenta que todavía existe en Firestore. */
     suspend fun hasValidSession(): Boolean = currentUser() != null
 
     suspend fun currentUser(): SessionUser? {
         if (session.isGuest()) {
             return SessionUser(name = "Invitado", role = UserRole.INVITADO, email = null, classCode = null)
         }
-        val id = session.userId() ?: return null
-        return usuarioDao.buscarPorId(id)?.toSessionUser()
+
+        session.userId()?.let { id ->
+            usuarioDao.buscarPorId(id)?.let { return it.toSessionUser() }
+        }
+
+        // La sesión de Firebase puede seguir abierta aunque la copia local se haya borrado
+        // (por ejemplo, si limpiaron los datos de la app). En ese caso se recupera el perfil.
+        val uid = firebaseAuth.uidActual ?: return null
+        val perfil = runCatching { firestore.buscarUsuario(uid) }.getOrNull() ?: return null
+        val localId = runCatching { mirror.guardar(perfil) }.getOrNull() ?: return null
+        session.saveUser(localId)
+        return perfil.toSessionUser()
     }
 
-    fun continueAsGuest() = session.saveGuest()
+    fun continueAsGuest() {
+        firebaseAuth.cerrarSesion()
+        session.saveGuest()
+    }
 
-    fun logout() = session.clear()
+    fun logout() {
+        firebaseAuth.cerrarSesion()
+        session.clear()
+    }
 
     // ---------- Login ----------
 
@@ -66,15 +99,23 @@ class AuthRepository(
         val correo = email.trim().lowercase()
         if (correo.isEmpty() || password.isEmpty()) return AuthResult.Failure(AuthError.CAMPOS_VACIOS)
 
-        val usuario = usuarioDao.buscarPorCorreo(correo)
-        // Se verifica siempre con el hash, aunque el correo no exista, para no revelar cuáles cuentas existen.
-        val ok = withContext(Dispatchers.Default) {
-            usuario != null && PasswordHasher.verify(password, usuario.passwordHash)
+        val uid = try {
+            firebaseAuth.iniciarSesion(correo, password).uid
+        } catch (e: Exception) {
+            return AuthResult.Failure(e.toAuthError())
         }
-        if (usuario == null || !ok) return AuthResult.Failure(AuthError.CREDENCIALES_INCORRECTAS)
 
-        session.saveUser(usuario.id)
-        return AuthResult.Success(usuario.toSessionUser())
+        val perfil = try {
+            firestore.buscarUsuario(uid)
+        } catch (e: Exception) {
+            return AuthResult.Failure(e.toAuthError())
+        } ?: return AuthResult.Failure(AuthError.DESCONOCIDO)
+
+        val localId = runCatching { mirror.guardar(perfil) }.getOrNull()
+            ?: return AuthResult.Failure(AuthError.DESCONOCIDO)
+
+        session.saveUser(localId)
+        return AuthResult.Success(perfil.toSessionUser())
     }
 
     // ---------- Registro ----------
@@ -87,10 +128,38 @@ class AuthRepository(
         validateCommon(nombre, correo, password, extraEmpty = codigo.isEmpty())?.let {
             return AuthResult.Failure(it)
         }
-        if (usuarioDao.buscarPorCorreo(correo) != null) return AuthResult.Failure(AuthError.CORREO_EXISTENTE)
-        if (usuarioDao.buscarMaestroPorCodigo(codigo) == null) return AuthResult.Failure(AuthError.CODIGO_INEXISTENTE)
 
-        return insertUser(nombre, correo, password, UserRole.ESTUDIANTE, codigo)
+        // El código se valida ANTES de crear la cuenta, para no ocupar el correo si se equivocó.
+        val clase = try {
+            firestore.buscarClase(codigo)
+        } catch (e: Exception) {
+            return AuthResult.Failure(e.toAuthError())
+        } ?: return AuthResult.Failure(AuthError.CODIGO_INEXISTENTE)
+
+        val uid = try {
+            firebaseAuth.registrar(correo, password).uid
+        } catch (e: Exception) {
+            return AuthResult.Failure(e.toAuthError())
+        }
+
+        val perfil = UsuarioDoc(
+            uid = uid,
+            nombreCompleto = nombre,
+            correo = correo,
+            rol = UserRole.ESTUDIANTE.dbValue,
+            claseId = clase.codigo
+        )
+
+        return try {
+            firestore.guardarUsuario(perfil)
+            val localId = mirror.guardar(perfil)
+            session.saveUser(localId)
+            AuthResult.Success(perfil.toSessionUser())
+        } catch (e: Exception) {
+            // Si Firestore falla, se borra la cuenta recién creada para no dejar el correo ocupado.
+            runCatching { firebaseAuth.eliminarCuentaActual() }
+            AuthResult.Failure(e.toAuthError())
+        }
     }
 
     suspend fun registerTeacher(name: String, email: String, password: String): AuthResult {
@@ -100,12 +169,55 @@ class AuthRepository(
         validateCommon(nombre, correo, password, extraEmpty = false)?.let {
             return AuthResult.Failure(it)
         }
-        if (usuarioDao.buscarPorCorreo(correo) != null) return AuthResult.Failure(AuthError.CORREO_EXISTENTE)
 
-        return insertUser(nombre, correo, password, UserRole.MAESTRO, generateUniqueClassCode())
+        val codigo = try {
+            generateUniqueClassCode()
+        } catch (e: Exception) {
+            return AuthResult.Failure(e.toAuthError())
+        }
+
+        val uid = try {
+            firebaseAuth.registrar(correo, password).uid
+        } catch (e: Exception) {
+            return AuthResult.Failure(e.toAuthError())
+        }
+
+        val perfil = UsuarioDoc(
+            uid = uid,
+            nombreCompleto = nombre,
+            correo = correo,
+            rol = UserRole.MAESTRO.dbValue,
+            claseId = codigo
+        )
+
+        return try {
+            firestore.crearClase(ClaseDoc(codigo = codigo, maestroUid = uid, maestroNombre = nombre))
+            firestore.guardarUsuario(perfil)
+            val localId = mirror.guardar(perfil)
+            session.saveUser(localId)
+            AuthResult.Success(perfil.toSessionUser())
+        } catch (e: Exception) {
+            // Se deshace todo para no dejar una clase o un correo a medias.
+            runCatching { firestore.eliminarClase(codigo) }
+            runCatching { firebaseAuth.eliminarCuentaActual() }
+            AuthResult.Failure(e.toAuthError())
+        }
     }
 
     // ---------- Internos ----------
+
+    /** Traduce las excepciones de Firebase a los motivos que entiende la interfaz. */
+    private fun Throwable.toAuthError(): AuthError = when (this) {
+        is FirebaseAuthWeakPasswordException -> AuthError.PASSWORD_CORTA
+        is FirebaseAuthUserCollisionException -> AuthError.CORREO_EXISTENTE
+        is FirebaseAuthInvalidCredentialsException -> AuthError.CREDENCIALES_INCORRECTAS
+        is FirebaseAuthInvalidUserException -> AuthError.CREDENCIALES_INCORRECTAS
+        is FirebaseNetworkException -> AuthError.SIN_CONEXION
+        else -> {
+            Log.w("AuthRepository", "Error de autenticación: ${javaClass.simpleName}: $message")
+            AuthError.DESCONOCIDO
+        }
+    }
 
     private fun validateCommon(name: String, email: String, password: String, extraEmpty: Boolean): AuthError? = when {
         name.isEmpty() || email.isEmpty() || password.isEmpty() || extraEmpty -> AuthError.CAMPOS_VACIOS
@@ -119,46 +231,32 @@ class AuthRepository(
     private fun hasFullName(name: String): Boolean =
         name.trim().split(Regex("\\s+")).count { it.isNotEmpty() } >= 3
 
-    private suspend fun insertUser(
-        name: String,
-        email: String,
-        password: String,
-        role: UserRole,
-        classCode: String
-    ): AuthResult {
-        val hash = withContext(Dispatchers.Default) { PasswordHasher.hash(password) }
-        val usuario = Usuario(
-            nombreCompleto = name,
-            correo = email,
-            passwordHash = hash,
-            rol = role.dbValue,
-            claseId = classCode
-        )
-        return try {
-            val id = usuarioDao.insertar(usuario).toInt()
-            session.saveUser(id)
-            AuthResult.Success(usuario.copy(id = id).toSessionUser())
-        } catch (_: SQLiteConstraintException) {
-            AuthResult.Failure(AuthError.CORREO_EXISTENTE)
-        } catch (_: Exception) {
-            AuthResult.Failure(AuthError.DESCONOCIDO)
-        }
-    }
-
-    /** Código de 6 caracteres sin letras ni números que se confunden (0/O, 1/I), como en el prototipo. */
+    /**
+     * Código de 6 caracteres sin letras ni números que se confunden (0/O, 1/I).
+     * Como el código es el id del documento en `clases`, basta leerlo para saber si está ocupado.
+     */
     private suspend fun generateUniqueClassCode(): String {
         repeat(20) {
-            val code = (1..6).map { CODE_CHARS[Random.nextInt(CODE_CHARS.length)] }.joinToString("")
-            if (usuarioDao.buscarMaestroPorCodigo(code) == null) return code
+            val code = randomCode(6)
+            if (firestore.buscarClase(code) == null) return code
         }
-        // Prácticamente imposible: se agrega un sufijo extra para no repetir.
-        return (1..8).map { CODE_CHARS[Random.nextInt(CODE_CHARS.length)] }.joinToString("")
+        return randomCode(8)
     }
+
+    private fun randomCode(length: Int): String =
+        (1..length).map { CODE_CHARS[Random.nextInt(CODE_CHARS.length)] }.joinToString("")
 
     private fun Usuario.toSessionUser() = SessionUser(
         name = nombreCompleto,
         role = UserRole.fromDb(rol),
         email = correo,
+        classCode = claseId
+    )
+
+    private fun UsuarioDoc.toSessionUser() = SessionUser(
+        name = nombreCompleto,
+        role = UserRole.fromDb(rol),
+        email = correo.ifBlank { null },
         classCode = claseId
     )
 
