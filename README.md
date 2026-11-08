@@ -118,7 +118,7 @@ Las versiones usan el formato `AA.M.m` (año, cambio mayor, cambio menor), por e
 | Integrante | Contribución |
 |---|---|
 | **Santos Enoch González Pérez** | Diseño visual y tema, módulo del Dado, "Cómo se resuelve", portafolio y panel del maestro, Diccionario con API externa y traducción, integración del QR, voz compartida, control de versiones y documentación. |
-| **Leonardo** (GitHub: `Leonardo251207`) | Integración con Firebase (Authentication, Firestore y Storage), sincronización de usuarios, evidencias y progreso, módulos de Números y Frases, y documentación del esquema de datos. |
+| **Leonardo Nucamendi Ruiz** (GitHub: `Leonardo251207`) | Integración con Firebase (Authentication, Firestore y Storage), sincronización de usuarios, evidencias y progreso, módulos de Números y Frases, y documentación del esquema de datos. |
 
 ## Créditos
 
