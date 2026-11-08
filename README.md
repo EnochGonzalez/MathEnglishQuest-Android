@@ -1,30 +1,34 @@
-# Math & English Quest (Android)
+# Math & English Quest — estructura inicial
 
-App educativa que combina matemáticas y vocabulario en inglés: módulo del Dado, números,
-frases y portafolio de evidencias, con panel para el maestro.
+Aplicación Android educativa (Kotlin, Jetpack Compose y arquitectura MVVM) con módulos de matemáticas
+y de inglés para niños.
 
-La información se guarda en **Firebase** (Authentication, Firestore y Storage) y se cachea
-en el teléfono con Room para que la app funcione sin internet.
+> **Esta rama (`main`) solo contiene el cascarón del proyecto**: la distribución de carpetas, sin código funcional.
+> Así lo establece la *Política de gestión de repositorios y control de versiones en GitHub* del curso.
 
-## Documentación
+## ¿Dónde está el código?
 
-- [`docs/EMPEZAR.md`](docs/EMPEZAR.md) — cómo correr el proyecto y qué necesita la API.
-- [`docs/firestore.md`](docs/firestore.md) — esquema de datos y reglas de seguridad.
+| Rama | Contenido |
+|------|-----------|
+| `main` | Estructura inicial del proyecto (esta rama). Sin código funcional. |
+| `develop` | Código funcional integrado. Aquí está la aplicación que se compila y se ejecuta. |
+| `feature/*` | Cambios en desarrollo. Cada uno entra a `develop` mediante Pull Request. |
 
-## Compilar
+Los releases (versiones estables, por ejemplo `v26.1.1`) se publican **desde `develop`**.
 
-```bash
-# Requiere app/google-services.json (no se versiona)
-./gradlew assembleDebug
+## Organización de carpetas
+
+```
+app/src/main/java/com/upchiapas/mathenglishquest/
+├── data/        local (Room, SharedPreferences), remote (Firebase y API con Retrofit), repository, model, security
+├── di/          contenedor de dependencias
+├── domain/      reglas de negocio puras (sin Android)
+├── ui/          components, navigation, screens (una carpeta por pantalla), theme
+└── utils/       ayudas de audio, imágenes, etc.
+app/src/main/res/   drawable, font, raw, values, xml
+app/src/test/       pruebas unitarias
+docs/               documentación y evidencias
+firebase/           reglas de seguridad de Firestore y Storage
 ```
 
-El APK queda en `app/build/outputs/apk/debug/app-debug.apk`.
-
-## Reglas de Firebase
-
-Antes de usar la app, publica las reglas en la consola:
-
-| Archivo | Dónde |
-|---|---|
-| `firebase/firestore.rules` | Firestore Database → Reglas |
-| `firebase/storage.rules` | Storage → Reglas |
+Para compilar y ejecutar la aplicación, cambia a la rama `develop`.
