@@ -68,13 +68,20 @@ Ejemplo:
 
 ### `evidencias/{id}`
 
-Ficha de una foto del portafolio. El id lo genera Firestore y **la imagen no va aquí**:
-vive en Firebase Storage (`evidencias/{uid}/{timestamp}.jpg`).
+### `clases/{codigo}/evidencias/{id}`
+
+Ficha de una foto del portafolio. **Van dentro de la clase** (`clases/{codigo}/evidencias`),
+no en una colección raíz. Es a propósito: en una **consulta**, Firestore no puede evaluar
+reglas que usan `get()` sobre los documentos devueltos; al llevar la clase en la ruta, la
+regla compara la ruta con el perfil y el maestro sí puede listar las evidencias de su clase.
+
+El id lo genera Firestore y **la imagen no va aquí**: vive en Firebase Storage
+(`evidencias/{uid}/{timestamp}.jpg`).
 
 | Campo | Tipo | Descripción |
 |---|---|---|
 | `uid` | string | Estudiante dueño de la foto |
-| `claseId` | string | Copia del código de la clase (para el maestro) |
+| `claseId` | string | Copia del código de la clase |
 | `rutaStorage` | string | `evidencias/{uid}/1730000000000.jpg` |
 | `fecha` | timestamp | |
 | `dificultad` | string | `"Fácil"`, `"Medio"`, ... |
@@ -117,9 +124,20 @@ Estado del módulo del Dado. Es privado de cada estudiante.
 3. Se crea `usuarios/{uid}` con `rol = "estudiante"` y `claseId = codigo`.
 
 **Mi Clase (maestro)**
-- `usuarios where claseId == miCodigo and rol == "estudiante"` ordenado por `nombreCompleto`.
+- `usuarios where claseId == miCodigo` ordenado por `nombreCompleto` (el rol se filtra en el cliente).
 - La app escucha ese query en tiempo real y copia los estudiantes a Room (caché local).
-- No requiere índice compuesto: se filtra por `claseId` y el rol se descarta en el cliente.
+- El conteo de evidencias sale de `totalEvidencias` del perfil, no de leer las fotos.
+
+**Portafolio del estudiante**
+1. La foto se comprime a ~1280 px de lado.
+2. Se sube a Storage en `evidencias/{uid}/{timestamp}.jpg`.
+3. Se crea el documento en `clases/{codigo}/evidencias`.
+4. Se suma 1 a `usuarios/{uid}.totalEvidencias` con `FieldValue.increment`.
+5. Se guarda la copia local en Room (la pantalla pinta desde ahí).
+
+**Portafolio visto por el maestro**
+- Consulta `clases/{miCodigo}/evidencias where uid == <uid del estudiante>`.
+- Copia las fichas a Room y **descarga la foto a la caché local** la primera vez que se ve.
 
 ## Reglas de seguridad
 
