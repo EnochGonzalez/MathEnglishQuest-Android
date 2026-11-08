@@ -42,7 +42,7 @@ class AppContainer(context: Context) {
         firestore = firestore,
         mirror = usuarioMirror
     )
-    val dadoProgressRepository = DadoProgressRepository(context)
+    val dadoProgressRepository = DadoProgressRepository(context, firebaseAuth, firestore, appScope)
     val evidenceRepository = EvidenceRepository(
         context = context,
         evidenciaDao = database.evidenciaDao(),

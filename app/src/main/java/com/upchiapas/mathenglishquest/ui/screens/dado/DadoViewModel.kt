@@ -70,6 +70,8 @@ class DadoViewModel(
             val key = userKeyProvider()
             userKey = key
             evidenceEligible = evidenceEligibleProvider()
+            // Trae el progreso de la nube antes de leer lo local (si no hay red, usa lo guardado).
+            progressStore.sync(key)
             progressStore.load(key)?.let { progress ->
                 val game = DadoGameState.fromProgress(progress)
                 _uiState.update { it.copy(game = game) }

@@ -83,5 +83,10 @@ service cloud.firestore {
       allow update, delete: if autenticado()
         && resource.data.uid == request.auth.uid;
     }
+
+    match /progreso/{uid} {
+      // El progreso del Dado es privado: cada quien lee y escribe solo el suyo.
+      allow read, write: if esPropietario(uid);
+    }
   }
 }

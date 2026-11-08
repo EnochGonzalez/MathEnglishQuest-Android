@@ -66,8 +66,45 @@ Ejemplo:
 }
 ```
 
-## Flujos
+### `evidencias/{id}`
 
+Ficha de una foto del portafolio. El id lo genera Firestore y **la imagen no va aquí**:
+vive en Firebase Storage (`evidencias/{uid}/{timestamp}.jpg`).
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `uid` | string | Estudiante dueño de la foto |
+| `claseId` | string | Copia del código de la clase (para el maestro) |
+| `rutaStorage` | string | `evidencias/{uid}/1730000000000.jpg` |
+| `fecha` | timestamp | |
+| `dificultad` | string | `"Fácil"`, `"Medio"`, ... |
+| `categorias` | string | Operaciones separadas por `\|` |
+| `ejercicio` | string | El ejercicio tal como lo vio el estudiante |
+
+Además, `usuarios/{uid}` lleva dos campos que mantiene la app al subir una foto (con
+`FieldValue.increment`), para que el panel del maestro muestre el total sin descargar fotos:
+
+| Campo | Tipo |
+|---|---|
+| `totalEvidencias` | number |
+| `ultimaEvidenciaEn` | timestamp |
+
+### `progreso/{uid}`
+
+Estado del módulo del Dado. Es privado de cada estudiante.
+
+| Campo | Tipo |
+|---|---|
+| `halfHearts` | number (medios corazones) |
+| `streak` | number |
+| `maxUnlockedLevel` | number |
+| `currentLevel` | number |
+| `mode` | string (`DIRECTO`, `NORMAL`, `RUSH`) |
+| `hadProgressedBeyondEasy` | boolean |
+| `allowNegatives` | boolean |
+| `actualizadoEn` | timestamp |
+
+## Flujos
 **Registro de maestro**
 1. `Auth.createUserWithEmailAndPassword(correo, password)` → obtiene `uid`.
 2. Se genera un código que no exista como documento en `clases`.
@@ -86,13 +123,24 @@ Ejemplo:
 
 ## Reglas de seguridad
 
-Están en `firebase/firestore.rules`. Se publican en
-**Firestore Database → Reglas**. Resumen: todo exige sesión; cada quien escribe solo su
-perfil; el rol y el correo no se pueden cambiar; se puede leer a quien comparte tu `claseId`.
+Hay **dos** archivos y se publican por separado:
+
+| Archivo | Dónde se pega |
+|---|---|
+| `firebase/firestore.rules` | Firestore Database → Reglas |
+| `firebase/storage.rules` | Storage → Reglas |
+
+Resumen de Firestore: todo exige sesión; cada quien escribe solo su perfil; el rol y el
+correo no se pueden cambiar; se puede leer a quien comparte tu `claseId`; las evidencias las
+crea solo su dueño y las lee su clase; el progreso es privado.
 
 Sobre `clases/{codigo}`: **leer un código concreto está permitido sin sesión** (para que el
 estudiante sepa si el código existe antes de crear su cuenta), pero **listar** la colección
 exige sesión, así que no se pueden descubrir códigos ajenos.
+
+Sobre Storage: solo el dueño sube fotos a su carpeta (máximo 5 MB y solo `image/*`).
+Cualquier usuario con sesión puede leerlas, porque el maestro necesita ver las fotos de sus
+estudiantes y las reglas de Storage no pueden consultar Firestore.
 
 ## Para la API
 
@@ -100,8 +148,8 @@ Con el SDK de administrador (`firebase-admin`, Node/Java/Python) se tiene acceso
 **no** se evalúan las reglas, así que la API puede:
 
 - Validar el token del cliente: `admin.auth().verifyIdToken(idToken)`.
-- Leer/escribir `usuarios` y `clases` sin restricciones.
-- Más adelante: `evidencias` y el progreso del Dado.
+- Leer/escribir `usuarios`, `clases`, `evidencias` y `progreso` sin restricciones.
+- Generar enlaces firmados de las fotos de Storage.
 
 ## Cómo está implementado en la app
 
@@ -109,15 +157,21 @@ Con el SDK de administrador (`firebase-admin`, Node/Java/Python) se tiene acceso
 |---|---|
 | Cuentas y contraseñas | `FirebaseAuthDataSource` (Firebase Authentication) |
 | Perfiles y clases | `FirestoreDataSource` (`usuarios`, `clases`) |
-| Copia local para la interfaz | `UsuarioMirror` → Room (`usuarios.firebaseUid`) |
+| Evidencias | `StorageDataSource` (fotos) + `FirestoreDataSource` (`evidencias`) |
+| Progreso del Dado | `DadoProgressRepository` (`progreso/{uid}` + SharedPreferences) |
+| Copia local para la interfaz | `UsuarioMirror` y `EvidenceRepository` → Room |
 | Login / registro | `AuthRepository` |
 | Mi Clase | `ClassRepository`: escucha la clase en Firestore y la copia a Room |
 
-Room sigue guardando **evidencias** y la app sigue funcionando sin internet con la última copia.
+Room es la **copia local** de todo lo que pinta la pantalla: la app funciona sin internet
+con lo último descargado. Las fotos se descargan a la carpeta privada la primera vez que se
+ven y ya no se vuelven a bajar.
+
 Las cuentas creadas antes de Firebase (solo en Room) ya no pueden entrar: hay que registrarse
 otra vez, porque su contraseña nunca salió del teléfono.
 
 ## Pendiente (siguientes entregas)
 
-- `evidencias/{id}` + fotos en **Firebase Storage** (hoy son locales en Room).
-- Progreso del Dado en la nube (hoy en SharedPreferences).
+- Volver a subir las fotos que se guardaron sin internet (hoy quedan marcadas con
+  `firebaseId = null` en Room y solo se ven en ese celular).
+- Notificaciones o reportes para el maestro.
