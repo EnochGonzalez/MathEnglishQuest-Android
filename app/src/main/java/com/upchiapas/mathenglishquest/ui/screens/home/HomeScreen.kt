@@ -50,6 +50,7 @@ fun HomeScreen(
         onNavigateToDado = { navController.navigate(Screen.Dado.route) },
         onNavigateToNumeros = { navController.navigate(Screen.Numeros.route) },
         onNavigateToFrases = { navController.navigate(Screen.Frases.route) },
+        onNavigateToDiccionario = { navController.navigate(Screen.Diccionario.route) },
         onNavigateToPortfolio = { navController.navigate(Screen.Portfolio.route) },
         onNavigateToClase = { navController.navigate(Screen.Clase.route) },
         onLogout = {
@@ -67,6 +68,7 @@ fun HomeScreenContent(
     onNavigateToDado: () -> Unit,
     onNavigateToNumeros: () -> Unit,
     onNavigateToFrases: () -> Unit,
+    onNavigateToDiccionario: () -> Unit,
     onNavigateToPortfolio: () -> Unit,
     onNavigateToClase: () -> Unit,
     onLogout: () -> Unit
@@ -150,6 +152,17 @@ fun HomeScreenContent(
                 iconBgColor = colors.redSoft,
                 iconColor = colors.redSoftText,
                 onClick = onNavigateToFrases
+            )
+
+            Spacer(modifier = Modifier.height(7.dp))
+
+            ModuleCard(
+                title = stringResource(R.string.module_diccionario_title),
+                description = stringResource(R.string.module_diccionario_desc),
+                iconRes = R.drawable.ic_book,
+                iconBgColor = colors.blueSoft,
+                iconColor = colors.blueSoftText,
+                onClick = onNavigateToDiccionario
             )
 
             // Solo estudiantes con cuenta

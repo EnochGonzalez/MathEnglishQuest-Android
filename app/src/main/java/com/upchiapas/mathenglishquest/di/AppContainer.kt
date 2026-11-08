@@ -1,6 +1,10 @@
 package com.upchiapas.mathenglishquest.di
 
 import android.content.Context
+import com.upchiapas.mathenglishquest.data.local.DictionaryPrefsStore
+import com.upchiapas.mathenglishquest.data.remote.dictionary.DictionaryClient
+import com.upchiapas.mathenglishquest.data.remote.dictionary.RetrofitDictionaryRemote
+import com.upchiapas.mathenglishquest.data.repository.DictionaryRepository
 import com.upchiapas.mathenglishquest.data.local.DatabaseProvider
 import com.upchiapas.mathenglishquest.data.local.SessionManager
 import com.upchiapas.mathenglishquest.data.remote.FirebaseAuthDataSource
@@ -60,6 +64,12 @@ class AppContainer(context: Context) {
         firestore = firestore,
         mirror = usuarioMirror,
         scope = appScope
+    )
+
+    // API externa del diccionario (Retrofit) + copia local de lo ya buscado para verlo sin internet
+    val dictionaryRepository = DictionaryRepository(
+        remote = RetrofitDictionaryRemote(DictionaryClient.createApi()),
+        store = DictionaryPrefsStore(context)
     )
 
     companion object {

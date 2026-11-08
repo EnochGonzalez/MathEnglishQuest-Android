@@ -63,4 +63,26 @@
     <string name="speech_correct">Correct! %1$s</string>
     <string name="speech_try_again">Try again</string>
     <string name="speech_answer_was">The correct answer was %1$s</string>
+
+    <!-- Módulo Diccionario (API externa) -->
+    <string name="module_diccionario_title">Diccionario</string>
+    <string name="module_diccionario_desc">Busca palabras en inglés y escucha su pronunciación</string>
+    <string name="dictionary_title">Diccionario</string>
+    <string name="dictionary_subtitle">Escribe una palabra en inglés para ver su significado y escuchar cómo se pronuncia.</string>
+    <string name="dictionary_search_hint">Ej. seven, twenty, thirteen</string>
+    <string name="dictionary_search_button">Buscar</string>
+    <string name="dictionary_loading">Buscando…</string>
+    <string name="dictionary_not_found">No encontramos «%1$s». Revisa cómo se escribe e inténtalo de nuevo.</string>
+    <string name="dictionary_invalid">Escribe una palabra en inglés, solo con letras (por ejemplo: seven).</string>
+    <string name="dictionary_no_connection">No hay conexión a internet. Revisa tu red e inténtalo otra vez. Las palabras que ya buscaste siguen disponibles abajo.</string>
+    <string name="dictionary_server_error">El diccionario no responde por ahora (error %1$s). Inténtalo en un momento.</string>
+    <string name="dictionary_server_error_generic">El diccionario no respondió como se esperaba. Inténtalo en un momento.</string>
+    <string name="dictionary_retry">Reintentar</string>
+    <string name="dictionary_listen">Escuchar</string>
+    <string name="dictionary_from_cache">Guardada en tu dispositivo (sin conexión)</string>
+    <string name="dictionary_example">Ejemplo: %1$s</string>
+    <string name="dictionary_recent">Palabras recientes</string>
+    <string name="dictionary_clear_all">Borrar todo</string>
+    <string name="dictionary_remove_word">Quitar %1$s de recientes</string>
+    <string name="dictionary_first_time">Todavía no has buscado palabras. Las que busques aparecerán aquí y podrás verlas aunque no tengas internet.</string>
 </resources>

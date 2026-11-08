@@ -62,6 +62,41 @@ class SoundPlayer(
         Log.d(TAG, "Reproduciendo (${mp.duration} ms)")
     }
 
+    /**
+     * Reproduce un audio desde internet (por ejemplo la pronunciación que manda el diccionario).
+     * Lo pidió el usuario con un toque, así que suena aunque el timbre esté en silencio.
+     * Si no se puede cargar o reproducir, avisa con [onError] para poder usar otra opción.
+     */
+    fun playUrl(url: String, onError: () -> Unit = {}) {
+        release()
+        val mp = MediaPlayer()
+        try {
+            mp.setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build()
+            )
+            mp.setDataSource(url)
+            mp.setOnPreparedListener { it.start() }
+            mp.setOnCompletionListener { release() }
+            mp.setOnErrorListener { _, what, extra ->
+                Log.e(TAG, "Error al reproducir $url: what=$what extra=$extra")
+                release()
+                onError()
+                true
+            }
+            player = mp
+            mp.prepareAsync()
+            Log.d(TAG, "Reproduciendo audio de internet: $url")
+        } catch (e: Exception) {
+            Log.e(TAG, "No se pudo preparar el audio: ${e.javaClass.simpleName}: ${e.message}")
+            mp.release()
+            player = null
+            onError()
+        }
+    }
+
     fun release() {
         player?.let {
             try {
