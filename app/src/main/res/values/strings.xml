@@ -92,4 +92,12 @@
     <string name="dictionary_lang_english">English</string>
     <string name="dictionary_machine_translation">Traducción automática: puede tener errores. Toca English para ver el original.</string>
     <string name="dictionary_first_time">Todavía no has buscado palabras. Las que busques aparecerán aquí y podrás verlas aunque no tengas internet.</string>
+
+    <!-- QR de la clase -->
+    <string name="qr_scan_button">Escanear QR de la clase</string>
+    <string name="qr_scan_ok">¡Código de clase listo! Completa tus datos y pulsa Registrarme.</string>
+    <string name="qr_scan_invalid">Ese QR no es de una clase de Math &amp; English Quest. Prueba con el QR que te muestra tu maestro o maestra.</string>
+    <string name="qr_scan_failed">No se pudo abrir el lector de QR en este dispositivo. Escribe el código de clase a mano.</string>
+    <string name="qr_class_caption">Los estudiantes pueden escanear este QR al registrarse</string>
+    <string name="qr_content_description">Código QR de la clase %1$s</string>
 </resources>

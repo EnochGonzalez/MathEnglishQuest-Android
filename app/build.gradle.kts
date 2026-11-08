@@ -45,6 +45,8 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp)
     implementation(libs.mlkit.translate)
+    implementation(libs.zxing.core)
+    implementation(libs.play.services.code.scanner)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)

@@ -20,8 +20,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import com.upchiapas.mathenglishquest.R
+import com.upchiapas.mathenglishquest.integration.qr.ClassQrPayload
+import com.upchiapas.mathenglishquest.integration.qr.QrCodeView
 import com.upchiapas.mathenglishquest.ui.theme.AppText
 import com.upchiapas.mathenglishquest.ui.theme.AppTheme
 
@@ -79,6 +82,30 @@ fun TeacherCodeScreen(
                 color = accent
             )
         }
+
+        // El mismo código en QR para que los estudiantes lo escaneen al registrarse
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 6.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            QrCodeView(
+                content = ClassQrPayload.encode(classCode),
+                contentDescription = stringResource(R.string.qr_content_description, classCode),
+                size = 190.dp
+            )
+        }
+        Text(
+            text = stringResource(R.string.qr_class_caption),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            color = colors.mute,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 20.dp)
+        )
 
         AuthPrimaryButton(text = "Ir a mi panel", onClick = onContinue)
     }
