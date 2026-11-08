@@ -66,8 +66,6 @@ Ejemplo:
 }
 ```
 
-### `evidencias/{id}`
-
 ### `clases/{codigo}/evidencias/{id}`
 
 Ficha de una foto del portafolio. **Van dentro de la clase** (`clases/{codigo}/evidencias`),
