@@ -3,6 +3,7 @@ package com.upchiapas.mathenglishquest.data.remote
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.upchiapas.mathenglishquest.data.model.UserRole
 import com.upchiapas.mathenglishquest.data.remote.model.ClaseDoc
 import com.upchiapas.mathenglishquest.data.remote.model.EvidenciaDoc
@@ -25,8 +26,18 @@ class FirestoreDataSource(
 
     private fun usuarios() = db.collection(FirestoreSchema.COLECCION_USUARIOS)
     private fun clases() = db.collection(FirestoreSchema.COLECCION_CLASES)
-    private fun evidencias() = db.collection(FirestoreSchema.COLECCION_EVIDENCIAS)
     private fun progreso() = db.collection(FirestoreSchema.COLECCION_PROGRESO)
+
+    /**
+     * Las evidencias viven **dentro de la clase**: `clases/{codigo}/evidencias/{id}`.
+     *
+     * No es casualidad: las reglas de Firestore no pueden usar `get()` para decidir si
+     * alguien puede hacer una **consulta** (solo para leer un documento suelto). Al poner la
+     * clase en la ruta, la regla compara la ruta con el perfil y el maestro puede listar las
+     * evidencias de su clase con una consulta normal.
+     */
+    private fun evidencias(claseId: String) =
+        clases().document(claseId).collection(FirestoreSchema.COLECCION_EVIDENCIAS)
 
     // ---------- Usuarios ----------
 
@@ -86,25 +97,30 @@ class FirestoreDataSource(
 
     // ---------- Evidencias ----------
 
-    /** Guarda la ficha de una foto y devuelve el id del documento. */
-    suspend fun guardarEvidencia(evidencia: EvidenciaDoc): String =
-        evidencias().add(evidencia.toMap()).awaitTask().id
+    /** Guarda la ficha de una foto dentro de su clase y devuelve el id del documento. */
+    suspend fun guardarEvidencia(claseId: String, evidencia: EvidenciaDoc): String =
+        evidencias(claseId).add(evidencia.toMap()).awaitTask().id
 
-    /** Evidencias de un estudiante, en tiempo real (la más reciente primero). */
-    fun observarEvidencias(uid: String): Flow<List<EvidenciaDoc>> = callbackFlow {
-        val registro = evidencias()
-            .whereEqualTo(FirestoreSchema.Evidencia.UID, uid)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                val docs = snapshot?.documents
-                    ?.mapNotNull { doc -> doc.data?.let { EvidenciaDoc.fromMap(doc.id, it) } }
-                    ?.sortedByDescending { it.fecha?.seconds ?: 0L }
-                    .orEmpty()
-                trySend(docs)
+    /**
+     * Evidencias de una clase, en tiempo real.
+     * Con [uid] se filtra a un solo estudiante (portafolio propio o el que mira el maestro);
+     * sin [uid] llegan las de toda la clase.
+     */
+    fun observarEvidencias(claseId: String, uid: String? = null): Flow<List<EvidenciaDoc>> = callbackFlow {
+        var consulta: Query = evidencias(claseId)
+        if (uid != null) consulta = consulta.whereEqualTo(FirestoreSchema.Evidencia.UID, uid)
+
+        val registro = consulta.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
             }
+            val docs = snapshot?.documents
+                ?.mapNotNull { doc -> doc.data?.let { EvidenciaDoc.fromMap(doc.id, it) } }
+                ?.sortedByDescending { it.fecha?.seconds ?: 0L }
+                .orEmpty()
+            trySend(docs)
+        }
         awaitClose { registro.remove() }
     }
 

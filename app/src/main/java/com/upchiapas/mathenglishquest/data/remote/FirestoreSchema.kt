@@ -15,7 +15,7 @@ object FirestoreSchema {
     /** Clases creadas por los maestros. El id del documento es el código de 6 caracteres. */
     const val COLECCION_CLASES = "clases"
 
-    /** Fotos del portafolio. El id lo genera Firestore; la foto vive en Storage. */
+    /** Fotos del portafolio. Subcolección de cada clase: `clases/{codigo}/evidencias/{id}`. */
     const val COLECCION_EVIDENCIAS = "evidencias"
 
     /** Progreso del módulo del Dado, uno por usuario. El id del documento es el UID. */

@@ -67,21 +67,23 @@ service cloud.firestore {
 
       allow update, delete: if autenticado()
         && resource.data.maestroUid == request.auth.uid;
-    }
 
-    match /evidencias/{evidenciaId} {
-      // Solo se sube una foto a nombre propio y dentro de la propia clase.
-      allow create: if autenticado()
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.claseId == miClaseId();
+      // Evidencias: subcolección de la clase (clases/{codigo}/evidencias/{id}).
+      //
+      // Van dentro de la clase a propósito: en una CONSULTA, Firestore no puede comprobar
+      // reglas que dependen de `get()` sobre los documentos devueltos. Al comparar la ruta
+      // con el perfil (que no depende del documento), el maestro sí puede listar las
+      // evidencias de su clase y el estudiante las suyas.
+      match /evidencias/{evidenciaId} {
+        allow read: if autenticado() && miClaseId() == codigo;
 
-      // El dueño ve sus fotos; el maestro ve las de su clase (comparten claseId).
-      allow read: if autenticado()
-        && (resource.data.uid == request.auth.uid || resource.data.claseId == miClaseId());
+        allow create: if autenticado()
+          && miClaseId() == codigo
+          && request.resource.data.uid == request.auth.uid;
 
-      // Si se volviera a escribir la ficha, solo el dueño puede hacerlo.
-      allow update, delete: if autenticado()
-        && resource.data.uid == request.auth.uid;
+        // Las fotos no se editan ni se borran desde la app.
+        allow update, delete: if false;
+      }
     }
 
     match /progreso/{uid} {

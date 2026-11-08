@@ -72,16 +72,18 @@ class EvidenceRepository(
 
         // Sin UID todavía no hay nube (cuenta vieja de Room): se guarda solo en el teléfono.
         val uid = usuario?.firebaseUid
+        val claseId = usuario?.claseId
         var firebaseId: String? = null
         var storagePath: String? = null
 
-        if (uid != null) {
+        if (uid != null && claseId != null) {
             try {
                 storagePath = storage.subirEvidencia(uid, file, "$now.jpg")
                 firebaseId = firestore.guardarEvidencia(
+                    claseId,
                     EvidenciaDoc(
                         uid = uid,
-                        claseId = usuario.claseId,
+                        claseId = claseId,
                         rutaStorage = storagePath,
                         fecha = Timestamp(now / 1000, 0),
                         dificultad = difficultyName,
@@ -135,15 +137,17 @@ class EvidenceRepository(
     fun fileFor(entry: EvidenceEntry): File = File(appContext.filesDir, entry.imageFileName)
 
     /**
-     * Escucha las evidencias del estudiante en Firestore y las copia a Room, descargando las
-     * fotos que falten. Así el maestro ve las fotos que el estudiante subió desde su celular.
+     * Escucha las evidencias de la clase y las copia a Room, descargando las fotos que falten.
+     * Así el maestro ve las fotos que el estudiante subió desde su celular.
      */
     private suspend fun iniciarSincronizacion(userId: Int) {
-        val uid = usuarioDao.buscarPorId(userId)?.firebaseUid ?: return
+        val usuario = usuarioDao.buscarPorId(userId) ?: return
+        val uid = usuario.firebaseUid ?: return
+        val claseId = usuario.claseId ?: return
         if (!uidsSincronizados.add(uid)) return
 
         scope.launch {
-            firestore.observarEvidencias(uid)
+            firestore.observarEvidencias(claseId, uid)
                 .catch { error ->
                     Log.w(TAG, "No se pudieron sincronizar las evidencias de $uid: ${error.message}")
                     uidsSincronizados.remove(uid)
