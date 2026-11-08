@@ -9,12 +9,15 @@ import java.util.concurrent.TimeUnit
 object DictionaryClient {
     private const val BASE_URL = "https://api.dictionaryapi.dev/"
 
-    fun createApi(): DictionaryApi {
-        val httpClient = OkHttpClient.Builder()
+    /** Cliente HTTP compartido: lo usan la API del diccionario y la descarga de los audios. */
+    val httpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
             .build()
+    }
 
+    fun createApi(): DictionaryApi {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(httpClient)

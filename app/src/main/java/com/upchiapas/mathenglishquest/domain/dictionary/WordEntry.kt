@@ -12,6 +12,12 @@ data class WordMeaning(
     val definitions: List<WordDefinition>
 )
 
+/** La palabra y sus significados ya traducidos al español. [word] es la traducción de la palabra. */
+data class TranslatedEntry(
+    val word: String,
+    val meanings: List<WordMeaning>
+)
+
 /** Lo que la app muestra de una palabra del diccionario. */
 data class WordEntry(
     val word: String,

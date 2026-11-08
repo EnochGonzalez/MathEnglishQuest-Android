@@ -84,5 +84,12 @@
     <string name="dictionary_recent">Palabras recientes</string>
     <string name="dictionary_clear_all">Borrar todo</string>
     <string name="dictionary_remove_word">Quitar %1$s de recientes</string>
+    <string name="dictionary_in_spanish">En español: %1$s</string>
+    <string name="dictionary_translating">Traduciendo al español…</string>
+    <string name="dictionary_translation_unavailable">No se pudo traducir ahora. La primera vez se necesita internet para bajar el idioma al celular; después funciona sin conexión.</string>
+    <string name="dictionary_translation_retry">Reintentar traducción</string>
+    <string name="dictionary_lang_spanish">Español</string>
+    <string name="dictionary_lang_english">English</string>
+    <string name="dictionary_machine_translation">Traducción automática: puede tener errores. Toca English para ver el original.</string>
     <string name="dictionary_first_time">Todavía no has buscado palabras. Las que busques aparecerán aquí y podrás verlas aunque no tengas internet.</string>
 </resources>

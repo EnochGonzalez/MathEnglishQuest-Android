@@ -23,6 +23,26 @@ interface DictionaryLocalStore {
     fun loadEntry(word: String): WordEntry?
     fun saveEntry(word: String, entry: WordEntry)
     fun removeEntry(word: String)
+
+    /** La traducción al español de una palabra ya buscada (para verla sin internet). */
+    fun loadTranslation(word: String): TranslatedEntry?
+    fun saveTranslation(word: String, translation: TranslatedEntry)
+}
+
+/** Guarda en el celular el audio de pronunciación para que suene al instante y sin internet. */
+interface PronunciationCache {
+    /** Ruta del archivo si ese audio ya está guardado; null si no. */
+    fun cachedPath(url: String): String?
+    /** Descarga y guarda el audio. Devuelve la ruta del archivo, o null si no se pudo. */
+    suspend fun download(url: String): String?
+}
+
+/** Traduce del inglés al español. En la app lo hace ML Kit dentro del celular. */
+interface TextTranslator {
+    /** Deja listo el traductor (la primera vez baja el idioma). false si no se pudo. */
+    suspend fun prepare(): Boolean
+    /** El texto en español, o null si no se pudo traducir. */
+    suspend fun translate(text: String): String?
 }
 
 /** Resultado de una búsqueda tal como lo necesita la pantalla. */

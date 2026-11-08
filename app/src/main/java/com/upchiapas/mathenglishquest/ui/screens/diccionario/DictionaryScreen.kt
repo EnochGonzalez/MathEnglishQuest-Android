@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.upchiapas.mathenglishquest.R
+import com.upchiapas.mathenglishquest.domain.dictionary.TranslatedEntry
 import com.upchiapas.mathenglishquest.domain.dictionary.WordEntry
 import com.upchiapas.mathenglishquest.ui.components.ChunkyButton
 import com.upchiapas.mathenglishquest.ui.components.ChunkyCard
@@ -71,13 +72,19 @@ fun DictionaryScreen(
         onHistoryWordSelected = viewModel::onHistoryWordSelected,
         onHistoryWordRemoved = viewModel::onHistoryWordRemoved,
         onClearHistory = viewModel::onClearHistory,
+        onLanguageSelected = viewModel::onLanguageSelected,
+        onRetryTranslation = viewModel::onRetryTranslation,
         onListen = { entry ->
-            // Primero el audio real que manda la API; si no trae o no se puede cargar, lo dice la voz del celular
-            val url = entry.audioUrl
-            if (url != null) {
-                soundPlayer.playUrl(url, onError = { tts.speak(entry.word) })
-            } else {
-                tts.speak(entry.word)
+            // 1) El audio ya guardado en el celular: suena al instante y sin internet
+            // 2) Si todavía se está descargando, se reproduce desde internet
+            // 3) Si la palabra no trae audio o falla, habla la voz del celular
+            val speakInstead = { tts.speak(entry.word) }
+            val savedAudio = state.audioFilePath
+            val audioUrl = entry.audioUrl
+            when {
+                savedAudio != null -> soundPlayer.playFile(savedAudio, onError = speakInstead)
+                audioUrl != null -> soundPlayer.playUrl(audioUrl, onError = speakInstead)
+                else -> speakInstead()
             }
         }
     )
@@ -91,6 +98,8 @@ fun DictionaryScreenContent(
     onHistoryWordSelected: (String) -> Unit,
     onHistoryWordRemoved: (String) -> Unit,
     onClearHistory: () -> Unit,
+    onLanguageSelected: (Boolean) -> Unit,
+    onRetryTranslation: () -> Unit,
     onListen: (WordEntry) -> Unit
 ) {
     val colors = AppTheme.colors
@@ -173,7 +182,15 @@ fun DictionaryScreenContent(
             contentPadding = PaddingValues(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            item { ResultSection(state = state, onRetry = onSearch, onListen = onListen) }
+            item {
+                ResultSection(
+                    state = state,
+                    onRetry = onSearch,
+                    onLanguageSelected = onLanguageSelected,
+                    onRetryTranslation = onRetryTranslation,
+                    onListen = onListen
+                )
+            }
 
             item {
                 if (state.history.isNotEmpty()) {
@@ -232,6 +249,8 @@ fun DictionaryScreenContent(
 private fun ResultSection(
     state: DictionaryUiState,
     onRetry: () -> Unit,
+    onLanguageSelected: (Boolean) -> Unit,
+    onRetryTranslation: () -> Unit,
     onListen: (WordEntry) -> Unit
 ) {
     when (state.status) {
@@ -259,7 +278,16 @@ private fun ResultSection(
         }
 
         DictionaryStatus.SUCCESS -> state.entry?.let {
-            WordCard(entry = it, fromCache = state.fromCache, onListen = { onListen(it) })
+            WordCard(
+                entry = it,
+                fromCache = state.fromCache,
+                translation = state.translation,
+                translationStatus = state.translationStatus,
+                showSpanish = state.showSpanish,
+                onLanguageSelected = onLanguageSelected,
+                onRetryTranslation = onRetryTranslation,
+                onListen = { onListen(it) }
+            )
         }
 
         DictionaryStatus.NOT_FOUND ->
@@ -320,11 +348,23 @@ private fun MessageBox(text: String, onRetry: (() -> Unit)? = null) {
     }
 }
 
-/** La palabra con su pronunciación, el botón de escuchar y sus significados. */
+/** La palabra con su pronunciación, su traducción, el botón de escuchar y sus significados. */
 @Composable
-private fun WordCard(entry: WordEntry, fromCache: Boolean, onListen: () -> Unit) {
+private fun WordCard(
+    entry: WordEntry,
+    fromCache: Boolean,
+    translation: TranslatedEntry?,
+    translationStatus: TranslationStatus,
+    showSpanish: Boolean,
+    onLanguageSelected: (Boolean) -> Unit,
+    onRetryTranslation: () -> Unit,
+    onListen: () -> Unit
+) {
     val colors = AppTheme.colors
     val shape = RoundedCornerShape(20.dp)
+    // Los significados se muestran en español cuando ya está la traducción y el usuario eligió español
+    val meanings = if (showSpanish && translation != null) translation.meanings else entry.meanings
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -351,6 +391,15 @@ private fun WordCard(entry: WordEntry, fromCache: Boolean, onListen: () -> Unit)
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = colors.mute
+                    )
+                }
+                translation?.let {
+                    Text(
+                        text = stringResource(R.string.dictionary_in_spanish, it.word),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = colors.blueText,
+                        modifier = Modifier.padding(top = 4.dp)
                     )
                 }
             }
@@ -389,7 +438,72 @@ private fun WordCard(entry: WordEntry, fromCache: Boolean, onListen: () -> Unit)
             )
         }
 
-        entry.meanings.forEach { meaning ->
+        // ---- Estado de la traducción ----
+        Spacer(modifier = Modifier.height(12.dp))
+        when (translationStatus) {
+            TranslationStatus.IDLE -> Unit
+
+            TranslationStatus.LOADING -> Row(verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(
+                    color = colors.purple,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.dictionary_translating),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.mute
+                )
+            }
+
+            TranslationStatus.UNAVAILABLE -> Column {
+                Text(
+                    text = stringResource(R.string.dictionary_translation_unavailable),
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    lineHeight = 17.sp,
+                    color = colors.mute
+                )
+                Text(
+                    text = stringResource(R.string.dictionary_translation_retry),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    textDecoration = TextDecoration.Underline,
+                    color = colors.blueText,
+                    modifier = Modifier
+                        .clickable(onClick = onRetryTranslation)
+                        .padding(vertical = 6.dp)
+                )
+            }
+
+            TranslationStatus.DONE -> Column {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LanguageChip(
+                        label = stringResource(R.string.dictionary_lang_spanish),
+                        isSelected = showSpanish,
+                        onClick = { onLanguageSelected(true) }
+                    )
+                    LanguageChip(
+                        label = stringResource(R.string.dictionary_lang_english),
+                        isSelected = !showSpanish,
+                        onClick = { onLanguageSelected(false) }
+                    )
+                }
+                if (showSpanish) {
+                    Text(
+                        text = stringResource(R.string.dictionary_machine_translation),
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.mute,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                }
+            }
+        }
+
+        meanings.forEach { meaning ->
             Spacer(modifier = Modifier.height(14.dp))
             Text(
                 text = meaning.partOfSpeech,
@@ -423,6 +537,26 @@ private fun WordCard(entry: WordEntry, fromCache: Boolean, onListen: () -> Unit)
             }
         }
     }
+}
+
+/** Botón "Español" / "English" para alternar el idioma de los significados. */
+@Composable
+private fun LanguageChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
+    val colors = AppTheme.colors
+    val shape = RoundedCornerShape(20.dp)
+    Text(
+        text = label,
+        fontSize = 11.5.sp,
+        fontWeight = FontWeight.ExtraBold,
+        maxLines = 1,
+        color = if (isSelected) colors.onInverse else colors.mute,
+        modifier = Modifier
+            .clip(shape)
+            .background(if (isSelected) colors.inverseBg else colors.surface)
+            .border(2.dp, if (isSelected) colors.inverseBg else colors.line, shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 6.dp)
+    )
 }
 
 @Composable

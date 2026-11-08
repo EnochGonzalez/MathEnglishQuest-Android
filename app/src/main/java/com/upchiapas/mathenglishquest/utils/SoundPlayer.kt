@@ -67,7 +67,14 @@ class SoundPlayer(
      * Lo pidió el usuario con un toque, así que suena aunque el timbre esté en silencio.
      * Si no se puede cargar o reproducir, avisa con [onError] para poder usar otra opción.
      */
-    fun playUrl(url: String, onError: () -> Unit = {}) {
+    fun playUrl(url: String, onError: () -> Unit = {}) =
+        playSource(description = url, onError = onError) { setDataSource(url) }
+
+    /** Reproduce un audio ya guardado en el celular: empieza al instante y no necesita internet. */
+    fun playFile(path: String, onError: () -> Unit = {}) =
+        playSource(description = path, onError = onError) { setDataSource(path) }
+
+    private fun playSource(description: String, onError: () -> Unit, setSource: MediaPlayer.() -> Unit) {
         release()
         val mp = MediaPlayer()
         try {
@@ -77,18 +84,18 @@ class SoundPlayer(
                     .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                     .build()
             )
-            mp.setDataSource(url)
+            mp.setSource()
             mp.setOnPreparedListener { it.start() }
             mp.setOnCompletionListener { release() }
             mp.setOnErrorListener { _, what, extra ->
-                Log.e(TAG, "Error al reproducir $url: what=$what extra=$extra")
+                Log.e(TAG, "Error al reproducir $description: what=$what extra=$extra")
                 release()
                 onError()
                 true
             }
             player = mp
             mp.prepareAsync()
-            Log.d(TAG, "Reproduciendo audio de internet: $url")
+            Log.d(TAG, "Reproduciendo: $description")
         } catch (e: Exception) {
             Log.e(TAG, "No se pudo preparar el audio: ${e.javaClass.simpleName}: ${e.message}")
             mp.release()

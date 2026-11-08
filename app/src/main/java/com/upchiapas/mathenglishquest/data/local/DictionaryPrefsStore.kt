@@ -3,6 +3,7 @@ package com.upchiapas.mathenglishquest.data.local
 import android.content.Context
 import com.google.gson.Gson
 import com.upchiapas.mathenglishquest.domain.dictionary.DictionaryLocalStore
+import com.upchiapas.mathenglishquest.domain.dictionary.TranslatedEntry
 import com.upchiapas.mathenglishquest.domain.dictionary.WordEntry
 
 /**
@@ -37,10 +38,21 @@ class DictionaryPrefsStore(
     }
 
     override fun removeEntry(word: String) {
-        prefs.edit().remove(entryKey(word)).apply()
+        prefs.edit().remove(entryKey(word)).remove(translationKey(word)).apply()
+    }
+
+    override fun loadTranslation(word: String): TranslatedEntry? = try {
+        gson.fromJson(prefs.getString(translationKey(word), null), TranslatedEntry::class.java)
+    } catch (_: Exception) {
+        null
+    }
+
+    override fun saveTranslation(word: String, translation: TranslatedEntry) {
+        prefs.edit().putString(translationKey(word), gson.toJson(translation)).apply()
     }
 
     private fun entryKey(word: String) = "entry|$word"
+    private fun translationKey(word: String) = "translation|$word"
 
     private companion object {
         const val KEY_HISTORY = "history"
