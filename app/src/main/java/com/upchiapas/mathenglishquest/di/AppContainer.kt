@@ -1,6 +1,13 @@
 package com.upchiapas.mathenglishquest.di
 
 import android.content.Context
+import com.upchiapas.mathenglishquest.data.local.DictionaryPrefsStore
+import com.upchiapas.mathenglishquest.data.local.PronunciationFileCache
+import com.upchiapas.mathenglishquest.data.remote.dictionary.DictionaryClient
+import com.upchiapas.mathenglishquest.data.remote.dictionary.RetrofitDictionaryRemote
+import com.upchiapas.mathenglishquest.data.remote.translation.MlKitTextTranslator
+import com.upchiapas.mathenglishquest.data.repository.DictionaryRepository
+import com.upchiapas.mathenglishquest.utils.TextToSpeechHelper
 import com.upchiapas.mathenglishquest.data.local.DatabaseProvider
 import com.upchiapas.mathenglishquest.data.local.SessionManager
 import com.upchiapas.mathenglishquest.data.remote.FirebaseAuthDataSource
@@ -60,6 +67,18 @@ class AppContainer(context: Context) {
         firestore = firestore,
         mirror = usuarioMirror,
         scope = appScope
+    )
+
+    /** Voz en inglés compartida por todos los módulos: arranca con la app, no al primer toque. */
+    val textToSpeech = TextToSpeechHelper(context)
+
+    // API externa del diccionario (Retrofit) + copia local de lo ya buscado para verlo sin internet,
+    // audio de pronunciación guardado en el celular y traducción al español dentro del celular (ML Kit)
+    val dictionaryRepository = DictionaryRepository(
+        remote = RetrofitDictionaryRemote(DictionaryClient.createApi()),
+        store = DictionaryPrefsStore(context),
+        pronunciation = PronunciationFileCache(context, DictionaryClient.httpClient),
+        translator = MlKitTextTranslator()
     )
 
     companion object {

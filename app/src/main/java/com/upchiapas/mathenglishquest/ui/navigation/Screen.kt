@@ -15,6 +15,7 @@ sealed class Screen(val route: String) {
     object Numeros : Screen("numeros")
     object Frases : Screen("frases")
     object Portfolio : Screen("portfolio")
+    object Diccionario : Screen("diccionario")
     object Clase : Screen("clase")
     object ClaseStudent : Screen("clase_alumno/{studentId}") {
         const val ARG_STUDENT_ID = "studentId"

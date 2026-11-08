@@ -29,6 +29,7 @@ import com.upchiapas.mathenglishquest.ui.screens.auth.RegisterStudentScreen
 import com.upchiapas.mathenglishquest.ui.screens.auth.RegisterTeacherScreen
 import com.upchiapas.mathenglishquest.ui.screens.auth.TeacherCodeScreen
 import com.upchiapas.mathenglishquest.ui.screens.clase.ClassScreen
+import com.upchiapas.mathenglishquest.ui.screens.diccionario.DictionaryScreen
 import com.upchiapas.mathenglishquest.ui.screens.dado.DadoScreen
 import com.upchiapas.mathenglishquest.ui.screens.frases.FrasesScreen
 import com.upchiapas.mathenglishquest.ui.screens.home.HomeScreen
@@ -46,6 +47,7 @@ private val bottomBarRoutes = setOf(
     Screen.Numeros.route,
     Screen.Frases.route,
     Screen.Portfolio.route,
+    Screen.Diccionario.route,
     Screen.Clase.route,
     Screen.ClaseStudent.route
 )
@@ -71,7 +73,11 @@ fun AppNavigation() {
         }
     }
     // Mientras el maestro mira el portafolio de un estudiante, el ícono resaltado sigue siendo "Clase"
-    val highlightedRoute = if (currentRoute == Screen.ClaseStudent.route) Screen.Clase.route else currentRoute
+    val highlightedRoute = when (currentRoute) {
+        Screen.ClaseStudent.route -> Screen.Clase.route
+        Screen.Diccionario.route -> Screen.Home.route   // se entra desde Inicio
+        else -> currentRoute
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -159,6 +165,7 @@ fun AppNavigation() {
             composable(Screen.Numeros.route) { NumerosScreen() }
             composable(Screen.Frases.route) { FrasesScreen() }
             composable(Screen.Portfolio.route) { PortfolioScreen() }
+            composable(Screen.Diccionario.route) { DictionaryScreen() }
             composable(Screen.Clase.route) {
                 ClassScreen(onOpenStudent = { id -> navController.navigate(Screen.ClaseStudent.createRoute(id)) })
             }

@@ -13,6 +13,7 @@ import com.upchiapas.mathenglishquest.ui.screens.clase.ClassViewModel
 import com.upchiapas.mathenglishquest.ui.screens.auth.RegisterStudentViewModel
 import com.upchiapas.mathenglishquest.ui.screens.auth.RegisterTeacherViewModel
 import com.upchiapas.mathenglishquest.ui.screens.dado.DadoViewModel
+import com.upchiapas.mathenglishquest.ui.screens.diccionario.DictionaryViewModel
 import com.upchiapas.mathenglishquest.ui.screens.home.HomeViewModel
 import com.upchiapas.mathenglishquest.ui.screens.portfolio.PortfolioViewModel
 import com.upchiapas.mathenglishquest.ui.screens.portfolio.StudentPortfolioViewModel
@@ -46,6 +47,7 @@ class AppViewModelFactory(private val container: AppContainer) : ViewModelProvid
                 fileResolver = container.evidenceRepository::fileFor
             )
             modelClass.isAssignableFrom(ClassViewModel::class.java) -> ClassViewModel(container.classRepository)
+            modelClass.isAssignableFrom(DictionaryViewModel::class.java) -> DictionaryViewModel(container.dictionaryRepository)
             modelClass.isAssignableFrom(MainViewModel::class.java) -> MainViewModel(auth)
             else -> throw IllegalArgumentException("ViewModel desconocido: ${modelClass.name}")
         } as T
