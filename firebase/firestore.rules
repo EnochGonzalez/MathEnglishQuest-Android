@@ -1,0 +1,68 @@
+rules_version = '2';
+
+// Reglas de Firestore para MathEnglishQuest.
+// Se pegan en: Firebase Console -> Firestore Database -> Reglas -> Publicar.
+//
+// Idea general:
+//  - Nadie entra sin sesión (todo exige request.auth).
+//  - Cada quien puede leer y escribir su propio perfil.
+//  - Un estudiante puede leer a sus compañeros y a su maestro porque comparten claseId.
+//  - Un maestro puede leer a los estudiantes de su clase (mismo claseId).
+//  - Las clases solo las crea y modifica su propio maestro.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    function esPropietario(uid) {
+      return autenticado() && request.auth.uid == uid;
+    }
+
+    // Perfil de quien hace la petición (null si todavía no lo crea).
+    function miPerfil() {
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data
+        : null;
+    }
+
+    function miClaseId() {
+      return miPerfil() == null ? null : miPerfil().claseId;
+    }
+
+    match /usuarios/{uid} {
+      // Propio perfil, o alguien de la misma clase (compañeros y maestro).
+      allow read: if esPropietario(uid)
+        || (autenticado() && miClaseId() != null && miClaseId() == resource.data.claseId);
+
+      // Solo se crea el perfil propio, con un rol válido y sin inventar campos.
+      allow create: if esPropietario(uid)
+        && request.resource.data.rol in ['estudiante', 'maestro']
+        && request.resource.data.nombreCompleto is string
+        && request.resource.data.correo is string
+        && request.resource.data.correo == request.resource.data.correo.lower();
+
+      // El rol y el correo no se pueden cambiar después de crear la cuenta.
+      allow update: if esPropietario(uid)
+        && request.resource.data.rol == resource.data.rol
+        && request.resource.data.correo == resource.data.correo;
+
+      // Las cuentas no se borran desde la app.
+      allow delete: if false;
+    }
+
+    match /clases/{codigo} {
+      // Cualquier usuario con sesión necesita leer una clase para unirse con el código.
+      allow read: if autenticado();
+
+      allow create: if autenticado()
+        && request.resource.data.maestroUid == request.auth.uid
+        && request.resource.data.codigo == codigo;
+
+      allow update, delete: if autenticado()
+        && resource.data.maestroUid == request.auth.uid;
+    }
+  }
+}

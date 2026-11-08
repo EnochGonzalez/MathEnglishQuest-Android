@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Credenciales de Firebase: cada quien descarga la suya de la consola
+app/google-services.json
