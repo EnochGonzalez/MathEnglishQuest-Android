@@ -26,14 +26,15 @@ interface UsuarioDao {
 
     /**
      * Estudiantes vinculados a una clase, con su total de evidencias y la fecha de la última.
-     * Se actualiza sola cuando alguien se registra o sube una foto.
+     * El conteo viene del perfil (lo actualiza el celular del estudiante al subir la foto),
+     * así que el maestro lo ve aunque la foto todavía no esté descargada en su teléfono.
      */
     @Query(
         "SELECT u.id AS id, u.nombreCompleto AS nombre, u.correo AS correo, " +
-            "COUNT(e.id) AS totalEvidencias, MAX(e.fecha) AS ultimaFecha " +
-            "FROM usuarios u LEFT JOIN evidencias e ON e.usuarioId = u.id " +
+            "u.totalEvidencias AS totalEvidencias, u.ultimaEvidencia AS ultimaFecha " +
+            "FROM usuarios u " +
             "WHERE u.rol = 'estudiante' AND u.claseId = :codigo " +
-            "GROUP BY u.id"
+            "ORDER BY u.nombreCompleto COLLATE NOCASE"
     )
     fun observarResumenDeClase(codigo: String): Flow<List<ResumenEstudiante>>
 

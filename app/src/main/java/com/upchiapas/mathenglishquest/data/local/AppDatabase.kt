@@ -7,7 +7,7 @@ import com.upchiapas.mathenglishquest.data.local.dao.UsuarioDao
 import com.upchiapas.mathenglishquest.data.local.entity.Evidencia
 import com.upchiapas.mathenglishquest.data.local.entity.Usuario
 
-@Database(entities = [Usuario::class, Evidencia::class], version = 5, exportSchema = false)
+@Database(entities = [Usuario::class, Evidencia::class], version = 6, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun usuarioDao(): UsuarioDao
     abstract fun evidenciaDao(): EvidenciaDao

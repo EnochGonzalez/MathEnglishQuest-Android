@@ -5,6 +5,7 @@ import com.upchiapas.mathenglishquest.data.local.DatabaseProvider
 import com.upchiapas.mathenglishquest.data.local.SessionManager
 import com.upchiapas.mathenglishquest.data.remote.FirebaseAuthDataSource
 import com.upchiapas.mathenglishquest.data.remote.FirestoreDataSource
+import com.upchiapas.mathenglishquest.data.remote.StorageDataSource
 import com.upchiapas.mathenglishquest.data.repository.AuthRepository
 import com.upchiapas.mathenglishquest.data.repository.ClassRepository
 import com.upchiapas.mathenglishquest.data.repository.DadoProgressRepository
@@ -25,6 +26,7 @@ class AppContainer(context: Context) {
     // ---------- Nube ----------
     private val firebaseAuth = FirebaseAuthDataSource()
     private val firestore = FirestoreDataSource()
+    private val storage = StorageDataSource()
 
     /** Copia local de los perfiles que vienen de Firestore. */
     private val usuarioMirror = UsuarioMirror(database.usuarioDao())
@@ -41,7 +43,16 @@ class AppContainer(context: Context) {
         mirror = usuarioMirror
     )
     val dadoProgressRepository = DadoProgressRepository(context)
-    val evidenceRepository = EvidenceRepository(context, database.evidenciaDao(), sessionManager)
+    val evidenceRepository = EvidenceRepository(
+        context = context,
+        evidenciaDao = database.evidenciaDao(),
+        usuarioDao = database.usuarioDao(),
+        session = sessionManager,
+        firestore = firestore,
+        storage = storage,
+        mirror = usuarioMirror,
+        scope = appScope
+    )
     val classRepository = ClassRepository(
         usuarioDao = database.usuarioDao(),
         session = sessionManager,

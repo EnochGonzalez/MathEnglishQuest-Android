@@ -19,5 +19,9 @@ data class Evidencia(
     /** Operaciones del ejercicio separadas por "|" (por ejemplo "Suma|Resta"). */
     val categorias: String,
     /** El ejercicio tal como lo vio el estudiante (por ejemplo "3 + (4 × 2)"). Vacío en fotos anteriores a la versión 4. */
-    val ejercicio: String
+    val ejercicio: String,
+    /** Id del documento en Firestore. null si la foto solo existe en este celular. */
+    val firebaseId: String? = null,
+    /** Ruta en Firebase Storage, por ejemplo "evidencias/{uid}/1730000000000.jpg". */
+    val storagePath: String? = null
 )

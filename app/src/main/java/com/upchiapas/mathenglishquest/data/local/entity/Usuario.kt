@@ -16,5 +16,9 @@ data class Usuario(
     val rol: String,           // "estudiante" o "maestro" (ver UserRole.dbValue)
     val claseId: String? = null, // maestro: su código de clase; estudiante: el código al que se unió
     /** UID de Firebase Auth. null en las cuentas viejas, creadas antes de migrar a Firebase. */
-    val firebaseUid: String? = null
+    val firebaseUid: String? = null,
+    /** Total de evidencias según la nube (lo mantiene Firestore con `increment`). */
+    val totalEvidencias: Int = 0,
+    /** Fecha de la última evidencia, o null si nunca ha subido ninguna. */
+    val ultimaEvidencia: Long? = null
 )

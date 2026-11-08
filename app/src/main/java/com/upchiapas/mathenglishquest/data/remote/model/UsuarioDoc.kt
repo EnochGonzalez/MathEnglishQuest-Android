@@ -18,7 +18,11 @@ data class UsuarioDoc(
     /** Maestro: el código de su clase. Estudiante: el código al que se unió. */
     val claseId: String? = null,
     val creadoEn: Timestamp? = null,
-    val actualizadoEn: Timestamp? = null
+    val actualizadoEn: Timestamp? = null,
+    /** Total de evidencias subidas (lo mantiene la app con `increment`). */
+    val totalEvidencias: Long = 0,
+    /** Fecha de la última evidencia; null si nunca ha subido. */
+    val ultimaEvidencia: Timestamp? = null
 ) {
     /** Formato exacto del documento en Firestore. */
     fun toMap(): Map<String, Any?> = mapOf(
@@ -27,7 +31,9 @@ data class UsuarioDoc(
         FirestoreSchema.Usuario.ROL to rol,
         FirestoreSchema.Usuario.CLASE_ID to claseId,
         FirestoreSchema.Usuario.CREADO_EN to (creadoEn ?: Timestamp.now()),
-        FirestoreSchema.Usuario.ACTUALIZADO_EN to Timestamp.now()
+        FirestoreSchema.Usuario.ACTUALIZADO_EN to Timestamp.now(),
+        FirestoreSchema.Usuario.TOTAL_EVIDENCIAS to totalEvidencias,
+        FirestoreSchema.Usuario.ULTIMA_EVIDENCIA to ultimaEvidencia
     )
 
     companion object {
@@ -39,7 +45,9 @@ data class UsuarioDoc(
             rol = data[FirestoreSchema.Usuario.ROL] as? String ?: "",
             claseId = data[FirestoreSchema.Usuario.CLASE_ID] as? String,
             creadoEn = data[FirestoreSchema.Usuario.CREADO_EN] as? Timestamp,
-            actualizadoEn = data[FirestoreSchema.Usuario.ACTUALIZADO_EN] as? Timestamp
+            actualizadoEn = data[FirestoreSchema.Usuario.ACTUALIZADO_EN] as? Timestamp,
+            totalEvidencias = (data[FirestoreSchema.Usuario.TOTAL_EVIDENCIAS] as? Number)?.toLong() ?: 0,
+            ultimaEvidencia = data[FirestoreSchema.Usuario.ULTIMA_EVIDENCIA] as? Timestamp
         )
     }
 }

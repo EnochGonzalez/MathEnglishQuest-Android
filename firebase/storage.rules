@@ -1,0 +1,26 @@
+rules_version = '2';
+
+// Reglas de Firebase Storage para las fotos del portafolio.
+// Se pegan en: Firebase Console -> Storage -> Reglas -> Publicar.
+//
+// Cada foto vive en evidencias/{uid}/{archivo}.jpg
+//  - Solo su dueño puede subirla.
+//  - Cualquier usuario con sesión puede leerla (el maestro necesita ver las fotos de sus
+//    estudiantes y Storage no puede consultar Firestore para comprobar la clase).
+//  - Nadie borra fotos desde la app.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    match /evidencias/{uid}/{archivo} {
+      allow read: if request.auth != null;
+
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      allow delete: if false;
+    }
+  }
+}

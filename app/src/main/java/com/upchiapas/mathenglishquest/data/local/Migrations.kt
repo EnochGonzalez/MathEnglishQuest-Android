@@ -54,3 +54,16 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         db.execSQL("ALTER TABLE `usuarios` ADD COLUMN `firebaseUid` TEXT")
     }
 }
+
+/**
+ * Versión 5 -> 6: las evidencias se sincronizan con Firebase (id del documento y ruta en
+ * Storage) y el perfil guarda el contador de evidencias que ve el maestro.
+ */
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `evidencias` ADD COLUMN `firebaseId` TEXT")
+        db.execSQL("ALTER TABLE `evidencias` ADD COLUMN `storagePath` TEXT")
+        db.execSQL("ALTER TABLE `usuarios` ADD COLUMN `totalEvidencias` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `usuarios` ADD COLUMN `ultimaEvidencia` INTEGER")
+    }
+}

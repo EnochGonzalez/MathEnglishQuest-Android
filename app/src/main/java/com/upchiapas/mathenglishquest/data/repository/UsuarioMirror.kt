@@ -40,10 +40,26 @@ class UsuarioMirror(private val usuarioDao: UsuarioDao) {
             correo = perfil.correo,
             rol = perfil.rol,
             claseId = perfil.claseId,
-            firebaseUid = perfil.uid
+            firebaseUid = perfil.uid,
+            totalEvidencias = perfil.totalEvidencias.toInt(),
+            ultimaEvidencia = perfil.ultimaEvidencia?.toDate()?.time ?: existente.ultimaEvidencia
         )
         usuarioDao.actualizar(actualizado)
         return actualizado.id
+    }
+
+    /**
+     * Suma una evidencia al contador local del estudiante. Se usa justo después de subir la
+     * foto, para que el maestro que use el mismo celular la vea de inmediato.
+     */
+    suspend fun registrarEvidenciaLocal(firebaseUid: String, fechaMillis: Long) {
+        val existente = usuarioDao.buscarPorFirebaseUid(firebaseUid) ?: return
+        usuarioDao.actualizar(
+            existente.copy(
+                totalEvidencias = existente.totalEvidencias + 1,
+                ultimaEvidencia = fechaMillis
+            )
+        )
     }
 
     companion object {

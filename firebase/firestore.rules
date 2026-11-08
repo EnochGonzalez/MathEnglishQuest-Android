@@ -68,5 +68,20 @@ service cloud.firestore {
       allow update, delete: if autenticado()
         && resource.data.maestroUid == request.auth.uid;
     }
+
+    match /evidencias/{evidenciaId} {
+      // Solo se sube una foto a nombre propio y dentro de la propia clase.
+      allow create: if autenticado()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.claseId == miClaseId();
+
+      // El dueño ve sus fotos; el maestro ve las de su clase (comparten claseId).
+      allow read: if autenticado()
+        && (resource.data.uid == request.auth.uid || resource.data.claseId == miClaseId());
+
+      // Si se volviera a escribir la ficha, solo el dueño puede hacerlo.
+      allow update, delete: if autenticado()
+        && resource.data.uid == request.auth.uid;
+    }
   }
 }
