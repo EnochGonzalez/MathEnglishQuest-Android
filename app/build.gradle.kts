@@ -35,6 +35,11 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        // Las pruebas unitarias corren en la JVM: sin esto, cualquier llamada a android.util.Log
+        // (por ejemplo al registrar un error de la API) truena con "Method not mocked".
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
