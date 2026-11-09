@@ -162,11 +162,16 @@ com.upchiapas.mathenglishquest
 
 Ejemplo: **buscar una palabra en el diccionario**
 
-1. La pantalla Compose recibe el texto y llama `viewModel.buscar("seven")`.
-2. `DictionaryViewModel` valida la entrada y pasa el estado a `Cargando`.
-3. `DictionaryRepository` decide: ¿está en caché? ¿hay internet? Consulta `Retrofit` o el
-   almacenamiento local.
-4. El resultado se convierte en `DictionaryUiState` (contenido, vacío o error).
+1. La pantalla Compose envía lo que se escribe con `viewModel.onQueryChange(...)` y, al pulsar
+   buscar, llama `viewModel.onSearch()`.
+2. `DictionaryViewModel` pasa el estado a `LOADING` y lanza una corrutina en `viewModelScope`
+   que llama al repositorio. Si el campo está vacío, responde `INVALID` sin llamar a nada.
+3. `DictionaryRepository` valida y normaliza la palabra (solo letras en inglés), la pide a la
+   API mediante `DictionaryRemote` (implementado con Retrofit en `RetrofitDictionaryRemote`) y,
+   si no hay internet, recurre a lo guardado en el dispositivo.
+4. El resultado (`LookupResult`) se convierte en `DictionaryUiState`: éxito, no encontrada,
+   sin conexión, error del servidor o texto inválido. Con la palabra ya en pantalla, el
+   ViewModel prepara en segundo plano su audio y su traducción.
 5. La pantalla observa el `StateFlow` y se redibuja. **La vista nunca conoce Retrofit ni la
    base de datos.**
 
@@ -207,8 +212,9 @@ copia local.
 ### 4.3 Traducción y voz
 
 La traducción al español se hace **dentro del teléfono** con **ML Kit Translate**: la app
-envía el texto a un traductor local y muestra la traducción bajo la definición en inglés. El
-primer uso descarga el modelo del idioma. La pronunciación se reproduce con `TextToSpeech` y
+envía el texto a un traductor local y muestra «En español: …» bajo la palabra, con los
+significados traducidos y un aviso de *traducción automática*. Los botones **Español / English**
+permiten alternar con el original. El primer uso descarga el modelo del idioma (unos 30 MB). La pronunciación se reproduce con `TextToSpeech` y
 con el audio que devuelve la API, que se guarda en caché para escucharlo sin internet.
 
 ### 4.4 Persistencia del historial
@@ -250,7 +256,7 @@ cuando pide una nueva.
 | Estudiantes, evidencias (copia) | **Room** | Pantallas rápidas y funcionamiento sin internet |
 | Sesión abierta | **SharedPreferences** | Saber quién entró al abrir la app |
 | Progreso del Dado | **SharedPreferences** + **Firestore** | Se recupera al cambiar de celular |
-| Diccionario | **SharedPreferences** (historial, traducciones y audio) | Consulta sin conexión |
+| Diccionario | **SharedPreferences** (historial, última respuesta y traducciones) y **archivos** en la carpeta privada de la app (audio de pronunciación) | Consulta sin conexión |
 
 Room está en la **versión 6**, con migraciones que conservan los datos del usuario
 (`2→3`, `3→4`, `4→5`, `5→6`). La app funciona como **caché local**: pinta desde Room y
@@ -287,8 +293,9 @@ Se eligieron **tres** de las integraciones del curso, todas con un propósito re
 
 - **Generación** del QR de la clase con ZXing (el maestro lo comparte).
 - **Escaneo** con Google Code Scanner, que no requiere permiso de cámara.
-- El contenido del QR es un texto propio (`meq:clase:CODIGO`) que la app valida antes de
-  usarlo.
+- El contenido del QR es un texto propio (`MEQ-CLASE:CODIGO`) que la app valida antes de
+  usarlo: solo acepta códigos de 6 a 8 caracteres de los que genera el registro del maestro.
+  También acepta el código a secas.
 
 > La aplicación declara únicamente el permiso `INTERNET`.
 
@@ -329,19 +336,21 @@ Se eligieron **tres** de las integraciones del curso, todas con un propósito re
 ## 9. Repositorio, versión y entrega
 
 - **Repositorio:** `github.com/EnochGonzalez/MathEnglishQuest-Android`
-- **Ramas:** `main` (entrega), `develop` (integración) y ramas `feature/*` para cada cambio,
-  integradas mediante *Pull Request*.
+- **Ramas (política del curso):** `main` conserva solo la estructura inicial, sin código
+  funcional; `develop` contiene el código integrado y de ahí salen las versiones; cada cambio
+  se desarrolla en una rama `feature/*` y entra a `develop` mediante *Pull Request*.
 - **Versión identificada:** `26.1.1` (`versionName` en Gradle).
 - **Documentación:** `README.md` con instrucciones, `docs/EMPEZAR.md` (puesta en marcha y
   guía de la API) y `docs/firestore.md` (esquema de datos y reglas).
-- **APK:** se genera con `./gradlew assembleDebug` en
-  `app/build/outputs/apk/debug/app-debug.apk`.
+- **APK:** adjunto al *release* `v26.1.1` de GitHub (publicado desde `develop`). También se
+  genera con `./gradlew assembleDebug` en `app/build/outputs/apk/debug/app-debug.apk`.
 - **Evidencias:** esta carpeta, `docs/evidencias/`.
 
 ### Cómo ejecutar
 
 ```bash
-# Requiere app/google-services.json (credenciales del proyecto Firebase)
+# El código está en la rama develop. Requiere app/google-services.json (proyecto Firebase)
+git switch develop
 ./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
