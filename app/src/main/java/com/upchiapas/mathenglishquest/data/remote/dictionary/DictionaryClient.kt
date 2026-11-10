@@ -14,6 +14,7 @@ object DictionaryClient {
         OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
+            .callTimeout(25, TimeUnit.SECONDS)   // tope para toda la llamada: nunca se queda cargando para siempre
             .build()
     }
 

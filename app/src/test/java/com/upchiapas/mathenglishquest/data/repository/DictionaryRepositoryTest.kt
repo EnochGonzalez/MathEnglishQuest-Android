@@ -10,7 +10,9 @@ import com.upchiapas.mathenglishquest.domain.dictionary.TranslatedEntry
 import com.upchiapas.mathenglishquest.domain.dictionary.WordDefinition
 import com.upchiapas.mathenglishquest.domain.dictionary.WordEntry
 import com.upchiapas.mathenglishquest.domain.dictionary.WordMeaning
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -46,6 +48,15 @@ class DictionaryRepositoryTest {
             translated += text
             return if (text in failOn) null else "ES($text)"
         }
+    }
+
+    /** Un traductor que nunca responde: simula un idioma que no termina de descargarse. */
+    private class HangingTranslator(
+        private val hangOnPrepare: Boolean = true,
+        private val hangOn: Set<String> = emptySet()
+    ) : TextTranslator {
+        override suspend fun prepare(): Boolean { if (hangOnPrepare) awaitCancellation(); return true }
+        override suspend fun translate(text: String): String? { if (text in hangOn) awaitCancellation(); return "ES($text)" }
     }
 
     private class FakeAudio(var downloadResult: String? = "/audios/a.mp3") : PronunciationCache {
@@ -274,5 +285,50 @@ class DictionaryRepositoryTest {
     fun audio_siFallaLaDescarga_devuelveNull() = runBlocking {
         val r = DictionaryRepository(FakeRemote(RemoteLookup.NotFound), FakeStore(), pronunciation = FakeAudio(downloadResult = null))
         assertNull(r.preparePronunciation(full("seven")))
+    }
+
+    // ---------- Tiempos límite: nunca se queda cargando para siempre ----------
+
+    @Test
+    fun siElIdiomaNuncaTerminaDeDescargarse_laTraduccionDevuelveNullEnVezDeEsperarParaSiempre() = runBlocking {
+        val r = DictionaryRepository(FakeRemote(RemoteLookup.NotFound), FakeStore(),
+            translator = HangingTranslator(), prepareTimeoutMs = 50, translateTimeoutMs = 50)
+        // El withTimeout de afuera es solo una red de seguridad de la prueba: debe terminar mucho antes
+        val result = withTimeout(5_000) { r.translateToSpanish("seven", full("seven")) }
+        assertNull(result)
+    }
+
+    @Test
+    fun siElTraductorSeAtoraAlCalentar_noBloqueaParaSiempre() = runBlocking {
+        val r = DictionaryRepository(FakeRemote(RemoteLookup.NotFound), FakeStore(),
+            translator = HangingTranslator(), prepareTimeoutMs = 50)
+        withTimeout(5_000) { r.warmUpTranslator() }          // si no hubiera tiempo límite, esto nunca terminaría
+    }
+
+    @Test
+    fun siSeAtoraLaTraduccionDeLaPalabra_devuelveNull() = runBlocking {
+        val r = DictionaryRepository(FakeRemote(RemoteLookup.NotFound), FakeStore(),
+            translator = HangingTranslator(hangOnPrepare = false, hangOn = setOf("seven")), translateTimeoutMs = 50)
+        assertNull(withTimeout(5_000) { r.translateToSpanish("seven", full("seven")) })
+    }
+
+    @Test
+    fun siSeAtoraUnaFrase_seQuedaEnInglesYNoSeGuardaIncompleta() = runBlocking {
+        val store = FakeStore()
+        val r = DictionaryRepository(FakeRemote(RemoteLookup.NotFound), store,
+            translator = HangingTranslator(hangOnPrepare = false, hangOn = setOf("def two")), translateTimeoutMs = 50)
+        val result = withTimeout(5_000) { r.translateToSpanish("seven", full("seven")) }!!
+        assertEquals("ES(seven)", result.word)
+        assertEquals("ES(def one)", result.meanings[0].definitions[0].text)
+        assertEquals("def two", result.meanings[0].definitions[1].text)       // la que se atoró queda en inglés
+        assertTrue(store.translations.isEmpty())                               // y no se guarda como completa
+    }
+
+    @Test
+    fun conElTiempoNormal_unTraductorRapidoSigueFuncionando() = runBlocking {
+        // Los tiempos límite no estorban cuando todo responde bien
+        val r = DictionaryRepository(FakeRemote(RemoteLookup.NotFound), FakeStore(),
+            translator = FakeTranslator(), prepareTimeoutMs = 30_000, translateTimeoutMs = 10_000)
+        assertEquals("ES(seven)", r.translateToSpanish("seven", full("seven"))!!.word)
     }
 }

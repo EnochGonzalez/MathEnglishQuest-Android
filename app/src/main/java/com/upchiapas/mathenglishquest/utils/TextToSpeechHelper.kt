@@ -3,6 +3,7 @@ package com.upchiapas.mathenglishquest.utils
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -13,13 +14,15 @@ import java.util.Locale
  * Voz del celular en inglés. Hay UNA sola para toda la app: arranca cuando se abre la app (durante la pantalla
  * de carga), así el primer toque de 🔊 en cualquier módulo suena casi al instante.
  *
- * Si se pide hablar antes de que el motor esté listo, la frase queda esperando y suena en cuanto termine de arrancar
- * (antes esos toques se perdían en silencio).
+ * - Si se pide hablar antes de que el motor esté listo, la frase espera y suena en cuanto termine de arrancar.
+ * - Si el motor no arrancó o falta la voz en inglés, se avisa a la persona y se vuelve a intentar en el siguiente
+ *   toque (antes quedaba mudo toda la sesión sin decir nada).
  */
 class TextToSpeechHelper(context: Context) {
     private val appContext = context.applicationContext
     private var tts: TextToSpeech? = null
     private var isReady = false
+    private var initFailed = false
     private var pendingText: String? = null
 
     init {
@@ -27,14 +30,20 @@ class TextToSpeechHelper(context: Context) {
     }
 
     private fun start() {
+        isReady = false
+        initFailed = false
         tts = TextToSpeech(appContext) { status ->
             if (status != TextToSpeech.SUCCESS) {
                 Log.w(TAG, "No arrancó el motor de voz (status=$status)")
+                fail("No se pudo iniciar la voz del celular. Revisa Ajustes > Texto a voz.")
                 return@TextToSpeech
             }
-            val result = tts?.setLanguage(Locale.US)
-            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.w(TAG, "El celular no tiene la voz en inglés instalada")
+            val engine = tts ?: return@TextToSpeech
+            var result = engine.setLanguage(Locale.US)
+            if (isMissing(result)) result = engine.setLanguage(Locale.ENGLISH)   // por si solo hay otra variante del inglés
+            if (isMissing(result)) {
+                Log.w(TAG, "El celular no tiene la voz en inglés instalada (result=$result)")
+                fail("Falta la voz en inglés. Instálala en Ajustes > Texto a voz.")
                 return@TextToSpeech
             }
             isReady = true
@@ -44,16 +53,28 @@ class TextToSpeechHelper(context: Context) {
     }
 
     fun speak(text: String) {
-        if (isReady) {
-            speakNow(text)
-        } else {
-            pendingText = text          // suena en cuanto el motor esté listo
-            if (tts == null) start()
+        when {
+            isReady -> speakNow(text)
+            initFailed -> {
+                // El arranque anterior falló: se intenta de nuevo con este toque (por ejemplo, si ya instalaron la voz)
+                pendingText = text
+                tts?.shutdown()
+                start()
+            }
+            else -> pendingText = text          // todavía arrancando: suena en cuanto esté listo
         }
     }
 
     private fun speakNow(text: String) {
         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "TTS_ID_$text")
+    }
+
+    private fun isMissing(result: Int?) =
+        result == null || result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED
+
+    private fun fail(message: String) {
+        initFailed = true
+        Toast.makeText(appContext, message, Toast.LENGTH_LONG).show()
     }
 
     fun shutdown() {

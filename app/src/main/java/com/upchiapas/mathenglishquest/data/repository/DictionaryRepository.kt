@@ -13,6 +13,7 @@ import com.upchiapas.mathenglishquest.domain.dictionary.WordMeaning
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Único punto por el que la app consulta el diccionario: valida la palabra, la pide a la API externa
@@ -23,7 +24,11 @@ class DictionaryRepository(
     private val remote: DictionaryRemote,
     private val store: DictionaryLocalStore,
     private val pronunciation: PronunciationCache? = null,
-    private val translator: TextTranslator? = null
+    private val translator: TextTranslator? = null,
+    /** Cuánto se espera a que el traductor esté listo (la primera vez baja el idioma). */
+    private val prepareTimeoutMs: Long = 30_000,
+    /** Cuánto se espera a que traduzca una palabra o una frase. */
+    private val translateTimeoutMs: Long = 10_000
 ) {
     private val _history = MutableStateFlow(store.loadHistory())
 
@@ -61,7 +66,9 @@ class DictionaryRepository(
 
     /** Pide al traductor que se prepare por adelantado (la primera vez baja el idioma, unos 30 MB). */
     suspend fun warmUpTranslator() {
-        translator?.prepare()
+        val translator = translator ?: return
+        // Con tiempo límite: si la descarga se atora, no deja el traductor bloqueado para todos
+        withTimeoutOrNull(prepareTimeoutMs) { translator.prepare() }
     }
 
     /**
@@ -74,11 +81,13 @@ class DictionaryRepository(
         store.loadTranslation(key)?.let { return it }
 
         val translator = translator ?: return null
-        if (!translator.prepare()) return null
-        val translatedWord = translator.translate(entry.word) ?: return null
+        // Si no está listo a tiempo (o falla), se devuelve null: la pantalla muestra el aviso con "Reintentar"
+        if (withTimeoutOrNull(prepareTimeoutMs) { translator.prepare() } != true) return null
+        val translatedWord = withTimeoutOrNull(translateTimeoutMs) { translator.translate(entry.word) } ?: return null
 
         var complete = true
-        suspend fun piece(text: String): String = translator.translate(text) ?: text.also { complete = false }
+        suspend fun piece(text: String): String =
+            withTimeoutOrNull(translateTimeoutMs) { translator.translate(text) } ?: text.also { complete = false }
 
         val meanings = entry.meanings.map { meaning ->
             WordMeaning(
