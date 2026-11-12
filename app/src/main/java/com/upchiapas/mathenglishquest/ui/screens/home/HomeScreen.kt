@@ -37,6 +37,7 @@ import com.upchiapas.mathenglishquest.ui.components.ChunkyCard
 import com.upchiapas.mathenglishquest.ui.components.UserTopHeader
 import com.upchiapas.mathenglishquest.ui.navigation.Screen
 import com.upchiapas.mathenglishquest.ui.theme.AppTheme
+import com.upchiapas.mathenglishquest.utils.rememberAppVersion
 
 @Composable
 fun HomeScreen(
@@ -74,6 +75,7 @@ fun HomeScreenContent(
     onLogout: () -> Unit
 ) {
     val colors = AppTheme.colors
+    val appVersion = rememberAppVersion()
 
     Column(
         modifier = Modifier
@@ -190,6 +192,18 @@ fun HomeScreenContent(
                     iconBgColor = colors.blueSoft,
                     iconColor = colors.blueSoftText,
                     onClick = onNavigateToClase
+                )
+            }
+
+            // Versión de la app, al final de la lista
+            if (appVersion.isNotBlank()) {
+                Spacer(modifier = Modifier.height(18.dp))
+                Text(
+                    text = stringResource(R.string.app_version_label, appVersion),
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.mute,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             }
 

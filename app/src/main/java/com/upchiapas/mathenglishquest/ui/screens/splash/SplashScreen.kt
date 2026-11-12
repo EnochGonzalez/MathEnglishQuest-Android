@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -34,6 +35,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +44,7 @@ import com.upchiapas.mathenglishquest.R
 import com.upchiapas.mathenglishquest.ui.rememberAppViewModelFactory
 import com.upchiapas.mathenglishquest.ui.components.DiceLogo
 import com.upchiapas.mathenglishquest.ui.theme.AppTheme
+import com.upchiapas.mathenglishquest.utils.rememberAppVersion
 import com.upchiapas.mathenglishquest.utils.rememberSoundPlayer
 
 private val Purple = Color(0xFF8B5CF6)
@@ -101,87 +104,107 @@ fun SplashContent() {
         label = "pulse"
     )
 
-    Column(
+    val appVersion = rememberAppVersion()
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.surface),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(colors.surface)
     ) {
-        DiceLogo(
-            modifier = Modifier
-                .graphicsLayer {
-                    translationY = -15.dp.toPx() * float
-                    rotationZ = 5f * float
-                }
-                .drawBehind {
-                    // Resplandor: 10 → 20 de extensión y opacidad 0.1 → 0.4
-                    val alpha = 0.1f + 0.3f * glow
-                    val spread = (10.dp + 10.dp * glow).toPx()
-                    val corner = 16.dp.toPx()
-                    for (i in 4 downTo 1) {
-                        val s = spread * i / 4f
-                        drawRoundRect(
-                            color = Purple.copy(alpha = alpha * 0.22f),
-                            topLeft = Offset(-s, -s),
-                            size = Size(size.width + 2 * s, size.height + 2 * s),
-                            cornerRadius = CornerRadius(corner + s)
-                        )
-                    }
-                }
-        )
-
-        Spacer(modifier = Modifier.height(25.dp))
-
-        Text(
-            text = "Math & English Quest",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 0.5.sp,
-            color = colors.ink
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
-
         Column(
-            modifier = Modifier.fillMaxWidth(0.6f),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Box(
+            DiceLogo(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(colors.line)
-            ) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val start = if (bar < 0.5f) 0f else (bar - 0.5f) * 2f
-                    val end = if (bar < 0.5f) bar * 2f else 1f
-                    if (end - start > 0.001f) {
-                        val x0 = start * size.width
-                        val x1 = end * size.width
-                        drawRoundRect(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(Purple, PurpleLight),
-                                startX = x0,
-                                endX = x1
-                            ),
-                            topLeft = Offset(x0, 0f),
-                            size = Size(x1 - x0, size.height),
-                            cornerRadius = CornerRadius(size.height / 2f)
-                        )
+                    .graphicsLayer {
+                        translationY = -15.dp.toPx() * float
+                        rotationZ = 5f * float
                     }
-                }
-            }
+                    .drawBehind {
+                        // Resplandor: 10 → 20 de extensión y opacidad 0.1 → 0.4
+                        val alpha = 0.1f + 0.3f * glow
+                        val spread = (10.dp + 10.dp * glow).toPx()
+                        val corner = 16.dp.toPx()
+                        for (i in 4 downTo 1) {
+                            val s = spread * i / 4f
+                            drawRoundRect(
+                                color = Purple.copy(alpha = alpha * 0.22f),
+                                topLeft = Offset(-s, -s),
+                                size = Size(size.width + 2 * s, size.height + 2 * s),
+                                cornerRadius = CornerRadius(corner + s)
+                            )
+                        }
+                    }
+            )
+
+            Spacer(modifier = Modifier.height(25.dp))
 
             Text(
-                text = "Cargando módulos...",
-                fontSize = 14.sp,
+                text = "Math & English Quest",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 0.5.sp,
+                color = colors.ink
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            Column(
+                modifier = Modifier.fillMaxWidth(0.6f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(colors.line)
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val start = if (bar < 0.5f) 0f else (bar - 0.5f) * 2f
+                        val end = if (bar < 0.5f) bar * 2f else 1f
+                        if (end - start > 0.001f) {
+                            val x0 = start * size.width
+                            val x1 = end * size.width
+                            drawRoundRect(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(Purple, PurpleLight),
+                                    startX = x0,
+                                    endX = x1
+                                ),
+                                topLeft = Offset(x0, 0f),
+                                size = Size(x1 - x0, size.height),
+                                cornerRadius = CornerRadius(size.height / 2f)
+                            )
+                        }
+                    }
+                }
+
+                Text(
+                    text = "Cargando módulos...",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.mute,
+                    modifier = Modifier
+                        .padding(top = 15.dp)
+                        .alpha(pulse)
+                )
+            }
+        }
+
+        // Versión de la app, abajo al centro
+        if (appVersion.isNotBlank()) {
+            Text(
+                text = stringResource(R.string.app_version_label, appVersion),
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = colors.mute,
                 modifier = Modifier
-                    .padding(top = 15.dp)
-                    .alpha(pulse)
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(bottom = 20.dp)
             )
         }
     }
