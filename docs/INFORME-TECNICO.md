@@ -313,13 +313,13 @@ Se eligieron **tres** de las integraciones del curso, todas con un propósito re
 
 ### 8.2 Pruebas unitarias
 
-**162 pruebas**, todas en verde:
+**167 pruebas**, todas en verde:
 
 | Suite | Pruebas |
 |---|---|
 | `HowToTest` | 46 |
+| `DictionaryRepositoryTest` | 30 |
 | `DadoLogicTest` | 26 |
-| `DictionaryRepositoryTest` | 25 |
 | `DadoGameStateTest` | 15 |
 | `DictionaryMapperTest` | 11 |
 | `ClassRosterTest` | 9 |
