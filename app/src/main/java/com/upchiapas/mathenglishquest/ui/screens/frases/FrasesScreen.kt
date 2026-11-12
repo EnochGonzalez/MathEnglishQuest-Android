@@ -60,8 +60,8 @@ fun FrasesScreen(
     val context = LocalContext.current
     val ttsHelper = rememberTextToSpeechHelper()
 
-    val voiceLauncher = rememberVoiceRecognizerLauncher { spokenText ->
-        viewModel.handleVoiceResult(spokenText)
+    val voiceLauncher = rememberVoiceRecognizerLauncher { candidates ->
+        viewModel.handleVoiceResult(candidates)
     }
 
     LaunchedEffect(uiState.speechToSpeak) {

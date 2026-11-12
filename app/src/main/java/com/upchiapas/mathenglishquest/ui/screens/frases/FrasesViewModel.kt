@@ -106,10 +106,16 @@ class FrasesViewModel : ViewModel() {
         }
     }
 
-    fun handleVoiceResult(spokenText: String) {
+    /**
+     * @param candidates interpretaciones del reconocedor de voz, la más probable primero.
+     * La respuesta cuenta como correcta si CUALQUIERA de ellas contiene el número esperado.
+     */
+    fun handleVoiceResult(candidates: List<String>) {
         val currentQ = _uiState.value.currentQuestion ?: return
+        // La que se muestra en "Escuché: ..." si la respuesta no fue correcta
+        val spokenText = candidates.firstOrNull() ?: return
         val correctWord = getWord(currentQ.result)
-        val isCorrect = isVoiceAnswerCorrect(spokenText, currentQ.result, correctWord)
+        val isCorrect = candidates.any { isVoiceAnswerCorrect(it, currentQ.result, correctWord) }
 
         if (isCorrect) {
             _uiState.value = _uiState.value.copy(
@@ -140,37 +146,31 @@ class FrasesViewModel : ViewModel() {
     }
 
     private fun isVoiceAnswerCorrect(spokenText: String, targetNumber: Int, targetWord: String): Boolean {
-        val tokens = spokenText.lowercase().split(Regex("[^a-zA-Z0-9]+")).filter { it.isNotBlank() }
-        val targetWordLower = targetWord.lowercase()
-        val targetNumStr = targetNumber.toString()
+        val tokens = spokenText.lowercase().split(Regex("[^a-z0-9]+")).filter { it.isNotBlank() }
+        val accepted = setOf(targetWord.lowercase(), targetNumber.toString()) +
+            soundAlikes[targetNumber].orEmpty()
 
-        val homophones = when (targetNumber) {
-            0 -> setOf("zero", "0")
-            1 -> setOf("one", "1", "won")
-            2 -> setOf("two", "2", "to", "too")
-            3 -> setOf("three", "3")
-            4 -> setOf("four", "4", "for")
-            5 -> setOf("five", "5")
-            6 -> setOf("six", "6")
-            7 -> setOf("seven", "7")
-            8 -> setOf("eight", "8", "ate")
-            9 -> setOf("nine", "9")
-            10 -> setOf("ten", "10")
-            11 -> setOf("eleven", "11")
-            12 -> setOf("twelve", "12")
-            13 -> setOf("thirteen", "13")
-            14 -> setOf("fourteen", "14")
-            15 -> setOf("fifteen", "15")
-            16 -> setOf("sixteen", "16")
-            17 -> setOf("seventeen", "17")
-            18 -> setOf("eighteen", "18")
-            19 -> setOf("nineteen", "19")
-            20 -> setOf("twenty", "20")
-            else -> setOf(targetWordLower, targetNumStr)
-        }
-
-        return tokens.any { token -> token in homophones }
+        return tokens.any { token -> token in accepted }
     }
+
+    /**
+     * Palabras con las que el reconocedor suele confundir cada número cuando se dice solo
+     * (sin "number" antes). Solo aplica a números de una palabra corta; del 11 en adelante
+     * el reconocedor casi no falla.
+     */
+    private val soundAlikes: Map<Int, Set<String>> = mapOf(
+        0 to setOf("cero", "hero"),
+        1 to setOf("won", "wan", "1st"),
+        2 to setOf("to", "too", "tu", "2nd"),
+        3 to setOf("tree", "free", "3rd"),
+        4 to setOf("for", "fore", "4th"),
+        5 to setOf("fife", "hive", "5th"),
+        6 to setOf("sex", "sics", "sick", "6th"),
+        7 to setOf("7th"),
+        8 to setOf("ate", "ait", "eighth", "8th", "hate", "aid", "eit"),
+        9 to setOf("nein", "9th"),
+        10 to setOf("tan", "then", "den", "10th")
+    )
 
     fun speakAnswer() {
         val answer = _uiState.value.resultModalAnswer
