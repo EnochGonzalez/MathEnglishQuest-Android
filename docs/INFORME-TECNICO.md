@@ -2,16 +2,16 @@
 
 **Aplicación móvil educativa para practicar matemáticas y vocabulario en inglés**
 
-| | |
-|---|---|
-| **Institución** | Universidad Politécnica del Estado de Chiapas |
-| **Materia** | Desarrollo de Aplicaciones Móviles |
-| **Producto** | Proyecto integrador — Unidad 3 |
-| **Aplicación** | Math & English Quest |
-| **Versión** | 26.1.1 |
+| |                                                              |
+|---|--------------------------------------------------------------|
+| **Institución** | Universidad Politécnica del Estado de Chiapas                |
+| **Materia** | Desarrollo de Aplicaciones Móviles                           |
+| **Producto** | Proyecto integrador — Unidad 3                               |
+| **Aplicación** | Math & English Quest                                         |
+| **Versión** | 26.1.2                                                       |
 | **Tecnologías** | Kotlin · Jetpack Compose · MVVM · Room · Retrofit · Firebase |
-| **Equipo** | Santos Enoch González Pérez · Leonardo Nucamendi Ruiz |
-| **Fecha** | 9 de noviembre de 2026 |
+| **Equipo** | Santos Enoch González Pérez · Leonardo Nucamendi Ruiz        |
+| **Fecha** | 9 de noviembre de 2026                                       |
 
 ---
 
@@ -339,10 +339,10 @@ Se eligieron **tres** de las integraciones del curso, todas con un propósito re
 - **Ramas (política del curso):** `main` conserva solo la estructura inicial, sin código
   funcional; `develop` contiene el código integrado y de ahí salen las versiones; cada cambio
   se desarrolla en una rama `feature/*` y entra a `develop` mediante *Pull Request*.
-- **Versión identificada:** `26.1.1` (`versionName` en Gradle).
+- **Versión identificada:** `26.1.2` (`versionName` en Gradle).
 - **Documentación:** `README.md` con instrucciones, `docs/EMPEZAR.md` (puesta en marcha y
   guía de la API) y `docs/firestore.md` (esquema de datos y reglas).
-- **APK:** adjunto al *release* `v26.1.1` de GitHub (publicado desde `develop`). También se
+- **APK:** adjunto al *release* `v26.1.2` de GitHub (publicado desde `develop`). También se
   genera con `./gradlew assembleDebug` en `app/build/outputs/apk/debug/app-debug.apk`.
 - **Evidencias:** esta carpeta, `docs/evidencias/`.
 

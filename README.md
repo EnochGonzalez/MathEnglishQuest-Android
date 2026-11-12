@@ -1,6 +1,6 @@
 # Math & English Quest
 
-**Versión 26.1.1** · Aplicación Android educativa para niños que combina **matemáticas** y **vocabulario en inglés**,
+**Versión 26.1.2** · Aplicación Android educativa para niños que combina **matemáticas** y **vocabulario en inglés**,
 con un panel para el maestro. Desarrollada en **Kotlin**, **Jetpack Compose** y arquitectura **MVVM**.
 
 > Proyecto integrador de *Desarrollo de Aplicaciones Móviles* — Universidad Politécnica del Estado de Chiapas.
@@ -111,7 +111,7 @@ Se sigue la *Política de gestión de repositorios y control de versiones en Git
 - `develop`: código funcional integrado. De aquí salen las versiones.
 - `feature/*`: cada cambio, que entra a `develop` mediante Pull Request.
 
-Las versiones usan el formato `AA.M.m` (año, cambio mayor, cambio menor), por ejemplo `26.1.1`, y se publican como *releases* de GitHub.
+Las versiones usan el formato `AA.M.m` (año, cambio mayor, cambio menor), por ejemplo `26.1.2`, y se publican como *releases* de GitHub.
 
 ## Equipo
 
