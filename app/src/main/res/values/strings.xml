@@ -100,4 +100,5 @@
     <string name="qr_scan_failed">No se pudo abrir el lector de QR en este dispositivo. Escribe el código de clase a mano.</string>
     <string name="qr_class_caption">Los estudiantes pueden escanear este QR al registrarse</string>
     <string name="qr_content_description">Código QR de la clase %1$s</string>
+    <string name="app_version_label">Versión %1$s</string>
 </resources>
